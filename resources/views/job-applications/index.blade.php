@@ -63,7 +63,7 @@
                         <th>{{ __('Company') }}</th>
                         <th>{{ __('Country') }}</th>
                         <th>{{ __('Platform') }}</th>
-                        <th style="width: 150px;">{{ __('Stage') }}</th>
+                        <th style="width: 170px;">{{ __('Stage') }}</th>
                         <th>{{ __('Outcome') }}</th>
                         <th style="width: 120px;">{{ __('Applied') }}</th>
                         <th style="width: 220px;">{{ __('Actions') }}</th>
