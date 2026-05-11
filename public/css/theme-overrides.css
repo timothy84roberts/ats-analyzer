@@ -1,0 +1,98 @@
+[x-cloak] {
+    display: none !important;
+}
+
+/* Dark theme overrides on top of compiled Tailwind (Breeze) */
+html[data-theme="dark"] body {
+    color: #e5e7eb;
+}
+
+html[data-theme="dark"] .bg-gray-100,
+html[data-theme="dark"] .min-h-screen.bg-gray-100 {
+    background-color: #111827 !important;
+}
+
+html[data-theme="dark"] .bg-white {
+    background-color: #1f2937 !important;
+}
+
+html[data-theme="dark"] .border-gray-100,
+html[data-theme="dark"] .border-gray-200 {
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] .text-gray-800,
+html[data-theme="dark"] .text-gray-900 {
+    color: #f3f4f6 !important;
+}
+
+html[data-theme="dark"] .text-gray-500,
+html[data-theme="dark"] .text-gray-600,
+html[data-theme="dark"] .text-gray-700 {
+    color: #9ca3af !important;
+}
+
+html[data-theme="dark"] .shadow,
+html[data-theme="dark"] .shadow-md,
+html[data-theme="dark"] .shadow-sm {
+    --tw-shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+}
+
+html[data-theme="dark"] .hover\:bg-gray-100:hover,
+html[data-theme="dark"] .focus\:bg-gray-100:focus {
+    background-color: #374151 !important;
+}
+
+html[data-theme="dark"] nav.bg-white {
+    background-color: #1f2937 !important;
+}
+
+html[data-theme="dark"] header.bg-white {
+    background-color: #1f2937 !important;
+}
+
+html[data-theme="dark"] .ring-gray-300 {
+    --tw-ring-color: #4b5563 !important;
+}
+
+html[data-theme="dark"] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #374151 !important;
+}
+
+html[data-theme="dark"] table {
+    color: #e5e7eb;
+}
+
+html[data-theme="dark"] thead {
+    background-color: #374151 !important;
+}
+
+html[data-theme="dark"] tbody tr:nth-child(even) {
+    background-color: #1f2937;
+}
+
+html[data-theme="dark"] tbody tr:nth-child(odd) {
+    background-color: #111827;
+}
+
+.theme-toggle-btn {
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    background: transparent;
+    cursor: pointer;
+}
+
+html[data-theme="dark"] .theme-toggle-btn {
+    border-color: #4b5563;
+    color: #e5e7eb;
+}

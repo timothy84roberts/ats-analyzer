@@ -1,0 +1,38 @@
+/* Summernote + admin-shell variables (light / dark) */
+.admin-summernote-wrap .note-editor.note-frame {
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    overflow: hidden;
+    background: var(--admin-surface-2);
+}
+
+.admin-summernote-wrap .note-toolbar {
+    background: var(--admin-surface-2);
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-summernote-wrap .note-btn {
+    background: transparent;
+    border-color: var(--admin-border);
+    color: var(--admin-text);
+}
+
+.admin-summernote-wrap .note-btn:hover,
+.admin-summernote-wrap .note-btn:focus {
+    background: var(--admin-surface);
+    color: var(--admin-text);
+}
+
+.admin-summernote-wrap .note-editing-area,
+.admin-summernote-wrap .note-editing-area .note-editable {
+    background: var(--admin-surface-2);
+    color: var(--admin-text);
+}
+
+.admin-summernote-wrap .note-status-output {
+    display: none;
+}
+
+.admin-summernote-wrap .note-placeholder {
+    color: var(--admin-text-muted);
+}
