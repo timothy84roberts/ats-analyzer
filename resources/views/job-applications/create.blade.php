@@ -9,7 +9,12 @@
                 @csrf
                 @include('job-applications._form')
                 <div class="admin-form-actions" style="margin-top: 24px;">
-                    <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save') }}</button>
+                    <label class="admin-check" style="margin-right: auto;">
+                        <input type="hidden" name="keep_creating" value="0">
+                        <input id="keep_creating" type="checkbox" name="keep_creating" value="1" @checked(old('keep_creating'))>
+                        <span>{{ __('Keep continue') }}</span>
+                    </label>
+                    <button type="submit" class="admin-btn admin-btn--primary">{{ __('Submit') }}</button>
                 </div>
             </form>
         </div>

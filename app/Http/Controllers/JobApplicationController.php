@@ -77,7 +77,9 @@ class JobApplicationController extends Controller
         }
         JobApplication::create($data);
 
-        return redirect()->route('applications.index')->with('status', 'Application created.');
+        $redirectRoute = $request->boolean('keep_creating') ? 'applications.create' : 'applications.index';
+
+        return redirect()->route($redirectRoute)->with('status', 'Application created.');
     }
 
     public function show(JobApplication $application): View
