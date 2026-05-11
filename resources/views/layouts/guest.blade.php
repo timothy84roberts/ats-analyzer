@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('assets/logo-mark.svg') }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -19,8 +20,8 @@
     </head>
     <body class="admin-auth-body">
         <div class="admin-auth-logo">
-            <a href="/" class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-bold text-xl shadow-md">
-                {{ strtoupper(substr(config('app.name', 'L'), 0, 1)) }}
+            <a href="{{ url('/') }}" class="inline-flex items-center justify-center" aria-label="{{ config('app.name', 'ATS Analyzer') }}">
+                <x-application-logo />
             </a>
         </div>
         <div class="admin-auth-card">

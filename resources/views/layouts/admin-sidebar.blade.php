@@ -16,7 +16,9 @@
         </button>
 
         <a href="{{ route('dashboard') }}" class="admin-sidebar__brand" @click="mobileNav = false">
-            <span class="admin-sidebar__logo-mark">{{ strtoupper(substr(config('app.name', 'A'), 0, 1)) }}</span>
+            <span class="admin-sidebar__logo-mark">
+                <img src="{{ asset('assets/logo-sidebar.svg') }}" alt="{{ config('app.name', 'ATS Analyzer') }}" class="w-full h-full rounded-[inherit] object-cover">
+            </span>
             <span class="admin-sidebar__brand-text">
                 <span class="admin-sidebar__brand-title">{{ config('app.name', 'ATS Analysis') }}</span>
             </span>

@@ -62,7 +62,7 @@
                         <th>{{ __('Stage') }}</th>
                         <th>{{ __('Outcome') }}</th>
                         <th>{{ __('Applied') }}</th>
-                        <th style="width: 140px;">{{ __('Actions') }}</th>
+                        <th style="width: 220px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,19 +72,81 @@
                             <td>{{ $app->company_name ?? '—' }}</td>
                             <td>{{ $app->country?->name }}</td>
                             <td>{{ $app->platform?->name }}</td>
-                            <td>{{ $app->pipelineStage?->label }}</td>
+                            <td>
+                                @php($stageSlug = $app->pipelineStage?->slug ?? 'unknown')
+                                <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $stageSlug }}">
+                                    {{ $app->pipelineStage?->label ?? '—' }}
+                                </span>
+                            </td>
                             <td>
                                 <span class="admin-pill admin-pill--{{ $app->outcome_status }}">{{ ucfirst($app->outcome_status) }}</span>
                             </td>
                             <td>{{ $app->applied_on->format('Y-m-d') }}</td>
                             <td class="whitespace-nowrap">
-                                <div class="admin-table-actions">
-                                    <a href="{{ route('applications.edit', $app) }}" class="admin-btn admin-btn--ghost" style="height: 36px; padding: 0 14px;">{{ __('Edit') }}</a>
+                                <div class="admin-table-actions" x-data="{ noteOpen: false }" style="flex-wrap: nowrap; gap: 6px;">
+                                    <a
+                                        href="{{ route('applications.edit', $app) }}"
+                                        class="admin-btn admin-btn--ghost"
+                                        aria-label="{{ __('Edit application') }}"
+                                        title="{{ __('Edit') }}"
+                                        style="height: 36px; width: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M4 20h4l10-10-4-4L4 16v4z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M13 7l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </a>
+                                    <button type="button" class="admin-btn admin-btn--ghost" style="height: 36px; padding: 0 14px;" @click="noteOpen = true">{{ __('Add note') }}</button>
                                     <form action="{{ route('applications.destroy', $app) }}" method="post" onsubmit="return confirm(@json(__('Delete this application?')));">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="admin-btn admin-btn--danger">{{ __('Delete') }}</button>
+                                        <button
+                                            type="submit"
+                                            class="admin-btn admin-btn--danger"
+                                            aria-label="{{ __('Delete application') }}"
+                                            title="{{ __('Delete') }}"
+                                            style="height: 36px; width: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M3 6h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                                <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M6 6l1 14h10l1-14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M10 10v7M14 10v7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                            </svg>
+                                        </button>
                                     </form>
+
+                                    <template x-if="noteOpen">
+                                        <div
+                                            class="admin-modal-backdrop"
+                                            x-cloak
+                                            @click="noteOpen = false"
+                                            @keydown.escape.window="noteOpen = false"
+                                            style="position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100;"
+                                        >
+                                            <div
+                                                class="admin-card admin-card--pad"
+                                                @click.stop
+                                                style="width: min(640px, 100%);"
+                                            >
+                                                <div style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+                                                    <h3 style="margin: 0;">{{ __('Add note') }}</h3>
+                                                    <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = false">{{ __('Close') }}</button>
+                                                </div>
+                                                <form method="post" action="{{ route('applications.notes.store', $app) }}" style="margin-top: 14px; width: 100%;">
+                                                    @csrf
+                                                    <div class="admin-field">
+                                                        <label class="admin-label" for="note-body-{{ $app->id }}">{{ __('Note') }}</label>
+                                                        <textarea id="note-body-{{ $app->id }}" name="body" rows="5" class="admin-textarea" placeholder="{{ __('Write a note…') }}" required autofocus></textarea>
+                                                    </div>
+                                                    <div style="display:flex; gap: 10px; justify-content:flex-end; margin-top: 14px;">
+                                                        <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = false">{{ __('Cancel') }}</button>
+                                                        <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save note') }}</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </td>
                         </tr>

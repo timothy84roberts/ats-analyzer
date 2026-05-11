@@ -11,6 +11,7 @@ use App\Models\Platform;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -81,7 +82,13 @@ class JobApplicationController extends Controller
 
     public function show(JobApplication $application): View
     {
-        $application->load(['country', 'platform', 'pipelineStage', 'stageHistories.pipelineStage']);
+        $application->load([
+            'country',
+            'platform',
+            'pipelineStage',
+            'stageHistories.pipelineStage',
+            'notes.user',
+        ]);
 
         return view('job-applications.show', compact('application'));
     }
@@ -118,11 +125,14 @@ class JobApplicationController extends Controller
     {
         $this->authorize('view', $application);
 
-        if (! $application->hasResume() || ! Storage::disk('local')->exists($application->resume_path)) {
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+
+        if (! $application->hasResume() || ! $disk->exists($application->resume_path)) {
             abort(404);
         }
 
-        return response()->file(Storage::disk('local')->path($application->resume_path), [
+        return response()->file($disk->path($application->resume_path), [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="resume.pdf"',
         ]);

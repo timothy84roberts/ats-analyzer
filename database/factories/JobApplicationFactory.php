@@ -22,7 +22,6 @@ class JobApplicationFactory extends Factory
             'user_id' => User::factory(),
             'title' => fake()->jobTitle(),
             'description' => fake()->optional()->paragraph(),
-            'notes' => fake()->optional()->sentence(),
             'outcome_status' => JobApplication::OUTCOME_WAITING,
             'pipeline_stage_id' => PipelineStage::factory(),
             'rejection_reason' => null,

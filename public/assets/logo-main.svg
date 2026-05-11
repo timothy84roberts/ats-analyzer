@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 64 64" role="img" aria-label="ATS Analyzer logo">
+  <defs>
+    <linearGradient id="g1" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="18" y1="16" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g1)"/>
+  <path d="M32 14 17 48h7.2l3-7.2h9.6l3 7.2H47L32 14zm-2 21.2 2-4.9 2 4.9H30z" fill="#f8fafc"/>
+  <circle cx="45" cy="19" r="6.2" fill="none" stroke="url(#g2)" stroke-width="3"/>
+  <path d="M49.5 23.5 54 28" stroke="url(#g2)" stroke-width="3" stroke-linecap="round"/>
+</svg>

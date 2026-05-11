@@ -21,17 +21,17 @@ class AtsLabAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_ats_page_forbidden_when_user_not_allowed(): void
+    public function test_ats_page_allowed_for_any_authenticated_user_when_enabled(): void
     {
         Config::set('ats.enabled', true);
         $user = User::factory()->create(['is_ats_lab_allowed' => false]);
 
         $this->actingAs($user)
             ->get(route('ats.index'))
-            ->assertForbidden();
+            ->assertOk();
     }
 
-    public function test_ats_page_allowed_when_enabled_and_user_flagged(): void
+    public function test_ats_page_still_allowed_when_user_flagged_and_enabled(): void
     {
         Config::set('ats.enabled', true);
         $user = User::factory()->create(['is_ats_lab_allowed' => true]);

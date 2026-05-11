@@ -10,7 +10,7 @@ class PlatformSeeder extends Seeder
     public function run(): void
     {
         $rows = [
-            ['name' => 'LinkedIn', 'slug' => 'linkedin', 'is_active' => true, 'sort_order' => 10],
+            ['name' => 'LinkedIn', 'slug' => 'linkedin', 'is_active' => true, 'sort_order' => 1],
         ];
 
         foreach ($rows as $row) {

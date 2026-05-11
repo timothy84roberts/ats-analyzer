@@ -20,7 +20,12 @@
             @endif
             <div class="admin-dl__row">
                 <dt class="admin-dl__dt">{{ __('Pipeline stage') }}</dt>
-                <dd class="admin-dl__dd">{{ $application->pipelineStage?->label }}</dd>
+                <dd class="admin-dl__dd">
+                    @php($currentStageSlug = $application->pipelineStage?->slug ?? 'unknown')
+                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $currentStageSlug }}">
+                        {{ $application->pipelineStage?->label ?? '—' }}
+                    </span>
+                </dd>
             </div>
             <div class="admin-dl__row">
                 <dt class="admin-dl__dt">{{ __('Country / Platform') }}</dt>
@@ -40,12 +45,6 @@
                     <dd class="admin-dl__dd">{{ $application->analysis_percentage }}</dd>
                 </div>
             @endif
-            @if ($application->notes)
-                <div class="admin-dl__row">
-                    <dt class="admin-dl__dt">{{ __('Notes') }}</dt>
-                    <dd class="admin-dl__dd" style="white-space: pre-wrap;">{{ $application->notes }}</dd>
-                </div>
-            @endif
             @if ($application->description)
                 <div class="admin-dl__row">
                     <dt class="admin-dl__dt">{{ __('Description / notes') }}</dt>
@@ -63,6 +62,24 @@
         </dl>
     </div>
 
+    <div class="admin-subcard" style="margin-top: 20px;">
+        <h3 class="admin-subcard__title">{{ __('Notes') }}</h3>
+        <ul class="admin-activity" style="margin: 0;">
+            @forelse ($application->notes as $note)
+                <li class="admin-activity__item" style="align-items: flex-start;">
+                    <div style="display:flex; flex-direction:column; gap: 6px; width: 100%;">
+                        <span class="admin-activity__meta">{{ $note->created_at?->format('Y-m-d H:i') }}</span>
+                        <div style="white-space: pre-line; color: var(--admin-text); margin: 0;">{{ $note->body }}</div>
+                    </div>
+                </li>
+            @empty
+                <li class="admin-activity__item" style="border: none; padding-top: 0;">
+                    <span style="color: var(--admin-text-muted);">{{ __('No notes yet.') }}</span>
+                </li>
+            @endforelse
+        </ul>
+    </div>
+
     @if ($application->hasResume())
         <div class="admin-card admin-card--pad" style="margin-top: 20px;">
             <h2 class="admin-subcard__title" style="margin-top: 0;">{{ __('Resume preview') }}</h2>
@@ -75,7 +92,10 @@
         <ul class="admin-activity">
             @forelse ($application->stageHistories as $h)
                 <li class="admin-activity__item">
-                    <span>{{ $h->pipelineStage?->label }}</span>
+                    @php($historyStageSlug = $h->pipelineStage?->slug ?? 'unknown')
+                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $historyStageSlug }}">
+                        {{ $h->pipelineStage?->label ?? '—' }}
+                    </span>
                     <span class="admin-activity__meta">{{ $h->entered_at->format('Y-m-d H:i') }}</span>
                 </li>
             @empty

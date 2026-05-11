@@ -57,7 +57,6 @@ class JobApplication extends Model
         'title',
         'description',
         'resume_path',
-        'notes',
         'outcome_status',
         'pipeline_stage_id',
         'rejection_reason',
@@ -130,5 +129,10 @@ class JobApplication extends Model
     public function atsAnalysisRuns(): HasMany
     {
         return $this->hasMany(AtsAnalysisRun::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(JobApplicationNote::class)->latest();
     }
 }

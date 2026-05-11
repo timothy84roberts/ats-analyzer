@@ -15,11 +15,6 @@ class StoreJobApplicationRequest extends FormRequest
 
         $desc = RichTextSanitizer::sanitize($this->input('description'));
         $this->merge(['description' => $desc === '' ? null : $desc]);
-
-        $notes = $this->input('notes');
-        if ($notes === null || trim((string) $notes) === '') {
-            $this->merge(['notes' => null]);
-        }
     }
 
     public function authorize(): bool
@@ -35,7 +30,6 @@ class StoreJobApplicationRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:50000'],
-            'notes' => ['nullable', 'string', 'max:20000'],
             'country_id' => ['required', 'exists:countries,id'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'platform_id' => ['required', 'exists:platforms,id'],

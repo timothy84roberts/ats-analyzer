@@ -32,8 +32,9 @@ class PlatformController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-        Platform::create($data);
+        unset($data['sort_order']);
+        $platform = Platform::create($data);
+        $platform->forceFill(['sort_order' => $platform->id])->save();
 
         return redirect()->route('platforms.index')->with('status', 'Platform created.');
     }
@@ -47,7 +48,7 @@ class PlatformController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
-        $data['sort_order'] = (int) ($data['sort_order'] ?? $platform->sort_order);
+        $data['sort_order'] = $platform->id;
         $platform->update($data);
 
         return redirect()->route('platforms.index')->with('status', 'Platform updated.');

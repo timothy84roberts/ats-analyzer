@@ -24,8 +24,7 @@
                         <th>{{ __('Name') }}</th>
                         <th>{{ __('Slug') }}</th>
                         <th>{{ __('Active') }}</th>
-                        <th>{{ __('Sort') }}</th>
-                        <th style="width: 140px;">{{ __('Actions') }}</th>
+                        <th style="width: 180px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,14 +35,13 @@
                             <td>
                                 <span class="admin-pill {{ $platform->is_active ? 'admin-pill--success' : 'admin-pill--waiting' }}">{{ $platform->is_active ? __('Yes') : __('No') }}</span>
                             </td>
-                            <td>{{ $platform->sort_order }}</td>
                             <td class="whitespace-nowrap">
-                                <div class="admin-table-actions">
+                                <div class="admin-table-actions" style="flex-wrap: nowrap; gap: 8px;">
                                     <a href="{{ route('platforms.edit', $platform) }}" class="admin-btn admin-btn--ghost" style="height: 36px; padding: 0 14px;">{{ __('Edit') }}</a>
                                     <form action="{{ route('platforms.destroy', $platform) }}" method="post" onsubmit="return confirm(@json(__('Delete this platform?')));">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="admin-btn admin-btn--danger">{{ __('Delete') }}</button>
+                                        <button type="submit" class="admin-btn admin-btn--danger" style="height: 36px; padding: 0 14px;">{{ __('Delete') }}</button>
                                     </form>
                                 </div>
                             </td>

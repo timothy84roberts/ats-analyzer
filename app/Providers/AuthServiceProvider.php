@@ -35,6 +35,6 @@ class AuthServiceProvider extends ServiceProvider
         // Countries & platforms: any signed-in user (shared reference lists for applications).
         Gate::define('manage-reference-data', fn (User $user): bool => true);
 
-        Gate::define('use-ats-lab', fn (User $user): bool => (bool) config('ats.enabled') && $user->is_ats_lab_allowed);
+        Gate::define('use-ats-lab', fn (User $user): bool => (bool) config('ats.enabled'));
     }
 }

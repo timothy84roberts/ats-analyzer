@@ -9,7 +9,7 @@ class StorePlatformRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->is_admin ?? false;
+        return $this->user() !== null;
     }
 
     /**
@@ -21,7 +21,6 @@ class StorePlatformRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('platforms', 'slug')],
             'is_active' => ['nullable', 'in:0,1,true,false'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

@@ -3,6 +3,13 @@
     $editing = (bool) ($application?->exists ?? false);
     $defaultOutcome = \App\Models\JobApplication::OUTCOME_WAITING;
     $rejectedOutcome = \App\Models\JobApplication::OUTCOME_REJECTED;
+    $countryOptions = $countries->map(fn ($country) => [
+        'id' => (string) $country->id,
+        'name' => $country->name,
+        'code' => strtoupper($country->code),
+        'flag' => 'https://flagcdn.com/24x18/'.strtolower($country->code).'.png',
+    ])->values();
+    $selectedCountryId = (string) old('country_id', $application?->country_id ?? '');
 @endphp
 <div class="admin-form-stack" @if ($editing) x-data="{ outcome: @js(old('outcome_status', $application?->outcome_status ?? $defaultOutcome)) }" @endif>
     @unless ($editing)
@@ -70,13 +77,6 @@
         @endif
     </div>
 
-    <div class="admin-field">
-        <label class="admin-label" for="notes">{{ __('Notes') }}</label>
-        <p class="admin-muted-hint" style="margin: 0 0 8px;">{{ __('Call reservation, skill test details, follow-ups, reminders…') }}</p>
-        <textarea id="notes" name="notes" rows="4" class="admin-textarea" placeholder="{{ __('Type any notes you want to keep for this application.') }}">{{ old('notes', $application?->notes ?? '') }}</textarea>
-        <x-input-error :messages="$errors->get('notes')" class="mt-2" />
-    </div>
-
     @pushOnce('styles')
         <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
         <link href="{{ asset('css/summernote-admin.css') }}" rel="stylesheet">
@@ -86,6 +86,30 @@
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
         <script>
+            function countryPicker(options, initialId) {
+                var list = Array.isArray(options) ? options : [];
+                var fallbackId = list.length > 0 ? list[0].id : '';
+                var normalizedInitialId = initialId == null ? '' : String(initialId);
+                var selected = list.some(function (item) {
+                    return item.id === normalizedInitialId;
+                }) ? normalizedInitialId : fallbackId;
+
+                return {
+                    open: false,
+                    options: list,
+                    selectedId: selected,
+                    selected: function () {
+                        return this.options.find(function (item) {
+                            return item.id === this.selectedId;
+                        }.bind(this)) || this.options[0] || { name: '', code: '', flag: '' };
+                    },
+                    pick: function (id) {
+                        this.selectedId = id;
+                        this.open = false;
+                    },
+                };
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
                 var ta = document.getElementById('description');
                 var wrap = document.getElementById('description-editor-wrap');
@@ -151,13 +175,42 @@
     @endif
 
     <div class="admin-field-grid-2">
-        <div class="admin-field">
+        <div class="admin-field" x-data="countryPicker(@js($countryOptions), @js($selectedCountryId))">
             <label class="admin-label" for="country_id">{{ __('Country') }}</label>
-            <select id="country_id" name="country_id" class="admin-select" required>
-                @foreach ($countries as $country)
-                    <option value="{{ $country->id }}" @selected((string) old('country_id', $application?->country_id ?? '') === (string) $country->id)>{{ $country->name }} ({{ $country->code }})</option>
-                @endforeach
-            </select>
+            <input id="country_id" type="hidden" name="country_id" x-model="selectedId" required>
+            <div style="position: relative;">
+                <button
+                    type="button"
+                    class="admin-select"
+                    @click="open = !open"
+                    style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;"
+                >
+                    <span style="display:flex; align-items:center; gap:10px; min-width:0;">
+                        <img :src="selected().flag" :alt="selected().name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                        <span x-text="selected().name + ' (' + selected().code + ')'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                    </span>
+                    <span style="color: var(--admin-text-muted);">▾</span>
+                </button>
+                <div
+                    x-show="open"
+                    x-cloak
+                    @click.outside="open = false"
+                    style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:180px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);"
+                >
+                    <template x-for="country in options" :key="country.id">
+                        <button
+                            type="button"
+                            @click="pick(country.id)"
+                            :style="selectedId === country.id
+                                ? 'display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;'
+                                : 'display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'"
+                        >
+                            <img :src="country.flag" :alt="country.name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                            <span x-text="country.name + ' (' + country.code + ')'"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
             <x-input-error :messages="$errors->get('country_id')" class="mt-2" />
         </div>
         <div class="admin-field">

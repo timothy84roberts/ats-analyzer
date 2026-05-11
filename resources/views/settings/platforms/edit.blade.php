@@ -19,11 +19,6 @@
                         <input id="slug" name="slug" class="admin-input" type="text" value="{{ old('slug', $platform->slug) }}" required>
                         <x-input-error :messages="$errors->get('slug')" class="mt-2" />
                     </div>
-                    <div class="admin-field">
-                        <label class="admin-label" for="sort_order">{{ __('Sort order') }}</label>
-                        <input id="sort_order" type="number" name="sort_order" class="admin-input" value="{{ old('sort_order', $platform->sort_order) }}">
-                        <x-input-error :messages="$errors->get('sort_order')" class="mt-2" />
-                    </div>
                     <div class="admin-check">
                         <input type="hidden" name="is_active" value="0">
                         <input id="is_active" type="checkbox" name="is_active" value="1" @checked(old('is_active', $platform->is_active))>
