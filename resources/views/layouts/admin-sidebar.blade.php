@@ -31,7 +31,10 @@
                 {{ __('Dashboard') }}
             </a>
             <a href="{{ route('applications.index') }}" class="admin-sidebar__link {{ $isApps ? 'is-active' : '' }}" @click="mobileNav = false">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2-1.75 2H5.5c-.963 0-1.75-.906-1.75-2v-4.15m16.5 0a2.251 2.251 0 00-1.591-1.591M3.75 14.15v-4.25m0 4.25a2.251 2.251 0 001.591 1.591M20.25 14.15l-3.629-3.629m0 0A2.25 2.25 0 0015.75 9h-1.5a2.25 2.25 0 00-2.25 2.25v.75m7.5 2.25l3.629-3.629m0 0A2.25 2.25 0 0019.5 9h-1.5a2.25 2.25 0 00-2.25 2.25v.75M9 9h3.75M9 12h3m-3 3h3m-6.75-3h6m-6.75 3h6" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-7.5A2.25 2.25 0 016 17.25V6.75A2.25 2.25 0 018.25 4.5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h6M9 12h6M9 15h3.75M14.25 3v3" />
+                </svg>
                 {{ __('Applications') }}
             </a>
             @can('use-ats-lab')

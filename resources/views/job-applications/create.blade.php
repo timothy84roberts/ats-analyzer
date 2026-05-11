@@ -4,6 +4,16 @@
     </x-slot>
 
     <div class="admin-form-page">
+        @if (session('status'))
+            <div class="admin-alert admin-alert--success js-auto-dismiss-alert">{{ session('status') }}</div>
+        @endif
+
+        @if ($errors->any())
+            <div class="admin-alert admin-alert--error js-auto-dismiss-alert">
+                {{ __('Failed to create application. Please review the form and try again.') }}
+            </div>
+        @endif
+
         <div class="admin-card admin-card--pad">
             <form method="post" action="{{ route('applications.store') }}" enctype="multipart/form-data">
                 @csrf
@@ -19,4 +29,20 @@
             </form>
         </div>
     </div>
+
+    @pushOnce('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.js-auto-dismiss-alert').forEach(function (alertEl) {
+                    setTimeout(function () {
+                        alertEl.style.transition = 'opacity 0.25s ease';
+                        alertEl.style.opacity = '0';
+                        setTimeout(function () {
+                            alertEl.remove();
+                        }, 250);
+                    }, 5000);
+                });
+            });
+        </script>
+    @endPushOnce
 </x-app-layout>

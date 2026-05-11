@@ -31,6 +31,7 @@ class JobApplicationController extends Controller
             ->where('user_id', $request->user()->id)
             ->when($request->filled('country_id'), fn ($q) => $q->where('country_id', $request->integer('country_id')))
             ->when($request->filled('platform_id'), fn ($q) => $q->where('platform_id', $request->integer('platform_id')))
+            ->when($request->filled('applied_on'), fn ($q) => $q->whereDate('applied_on', $request->input('applied_on')))
             ->when(
                 $request->filled('outcome_status') && in_array($request->input('outcome_status'), JobApplication::outcomeStatuses(), true),
                 fn ($q) => $q->where('outcome_status', $request->input('outcome_status'))
@@ -77,9 +78,18 @@ class JobApplicationController extends Controller
         }
         JobApplication::create($data);
 
-        $redirectRoute = $request->boolean('keep_creating') ? 'applications.create' : 'applications.index';
+        if ($request->boolean('keep_creating')) {
+            return redirect()->route('applications.create')
+                ->with('status', 'Application created successfully.')
+                ->withInput($request->only([
+                    'country_id',
+                    'platform_id',
+                    'applied_on',
+                    'keep_creating',
+                ]));
+        }
 
-        return redirect()->route($redirectRoute)->with('status', 'Application created.');
+        return redirect()->route('applications.index')->with('status', 'Application created successfully.');
     }
 
     public function show(JobApplication $application): View
@@ -120,7 +130,12 @@ class JobApplicationController extends Controller
 
         $application->update($data);
 
-        return redirect()->route('applications.index')->with('status', 'Application updated.');
+        $routeParameters = ['application' => $application];
+        if ($request->filled('return_to')) {
+            $routeParameters['return_to'] = $request->input('return_to');
+        }
+
+        return redirect()->route('applications.edit', $routeParameters)->with('status', 'Application updated.');
     }
 
     public function showResume(JobApplication $application): BinaryFileResponse

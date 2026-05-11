@@ -43,6 +43,10 @@
                     @endforeach
                 </select>
             </div>
+            <div class="admin-field">
+                <span class="admin-label">{{ __('Applied on') }}</span>
+                <input type="date" name="applied_on" value="{{ request('applied_on') }}" class="admin-input">
+            </div>
             <div class="admin-field" style="align-self: flex-end;">
                 <span class="admin-label" style="opacity:0;">&nbsp;</span>
                 <button type="submit" class="admin-btn admin-btn--ghost">{{ __('Filter') }}</button>
@@ -59,9 +63,9 @@
                         <th>{{ __('Company') }}</th>
                         <th>{{ __('Country') }}</th>
                         <th>{{ __('Platform') }}</th>
-                        <th>{{ __('Stage') }}</th>
+                        <th style="width: 150px;">{{ __('Stage') }}</th>
                         <th>{{ __('Outcome') }}</th>
-                        <th>{{ __('Applied') }}</th>
+                        <th style="width: 120px;">{{ __('Applied') }}</th>
                         <th style="width: 220px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
@@ -85,7 +89,7 @@
                             <td class="whitespace-nowrap">
                                 <div class="admin-table-actions" x-data="{ noteOpen: false }" style="flex-wrap: nowrap; gap: 6px;">
                                     <a
-                                        href="{{ route('applications.edit', $app) }}"
+                                        href="{{ route('applications.edit', ['application' => $app, 'return_to' => request()->fullUrl()]) }}"
                                         class="admin-btn admin-btn--ghost"
                                         aria-label="{{ __('Edit application') }}"
                                         title="{{ __('Edit') }}"

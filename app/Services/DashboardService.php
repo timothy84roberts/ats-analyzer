@@ -15,13 +15,17 @@ class DashboardService
     {
         $period = in_array($input['period'] ?? '', ['day', 'week', 'month', 'year'], true)
             ? $input['period']
-            : 'month';
+            : 'day';
+        $useDate = $this->resolveUseDate($input);
 
-        [$from, $to] = $this->resolveRange($period, $input['from'] ?? null, $input['to'] ?? null);
+        [$from, $to] = $useDate
+            ? $this->resolveRange($period, $input['from'] ?? null, $input['to'] ?? null)
+            : [null, null];
 
-        $base = JobApplication::query()
-            ->where('user_id', $user->id)
-            ->whereBetween('applied_on', [$from, $to]);
+        $base = JobApplication::query()->where('user_id', $user->id);
+        if ($useDate && $from && $to) {
+            $base->whereBetween('applied_on', [$from, $to]);
+        }
 
         if (! empty($input['country_id'])) {
             $base->where('country_id', (int) $input['country_id']);
@@ -40,6 +44,7 @@ class DashboardService
 
         return [
             'period' => $period,
+            'useDate' => $useDate,
             'from' => $from,
             'to' => $to,
             'timeSeriesLabels' => $timeSeries['labels'],
@@ -71,13 +76,22 @@ class DashboardService
 
         $start = match ($period) {
             'day' => $end->copy()->subDays(29),
-            'week' => $end->copy()->subWeeks(11)->startOfWeek(),
+            'week' => $end->copy()->subMonth(),
             'month' => $end->copy()->subMonths(11)->startOfMonth(),
-            'year' => $end->copy()->subYears(4)->startOfYear(),
-            default => $end->copy()->subMonths(11)->startOfMonth(),
+            'year' => $end->copy()->subYears(5)->startOfYear(),
+            default => $end->copy()->subDays(29),
         };
 
         return [$start->toDateString(), $toDate];
+    }
+
+    private function resolveUseDate(array $input): bool
+    {
+        if (! array_key_exists('use_date', $input)) {
+            return true;
+        }
+
+        return filter_var($input['use_date'], FILTER_VALIDATE_BOOL);
     }
 
     /**

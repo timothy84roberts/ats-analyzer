@@ -41,10 +41,10 @@ class JobApplication extends Model
     public static function outcomeStatPresentation(): array
     {
         return [
-            self::OUTCOME_WAITING => ['icon' => 'muted'],
-            self::OUTCOME_REJECTED => ['icon' => 'warn'],
-            self::OUTCOME_INTERVIEW => ['icon' => 'info'],
-            self::OUTCOME_SUCCESS => ['icon' => 'money'],
+            self::OUTCOME_WAITING => ['icon' => 'warn'],
+            self::OUTCOME_REJECTED => ['icon' => 'danger'],
+            self::OUTCOME_INTERVIEW => ['icon' => 'primary'],
+            self::OUTCOME_SUCCESS => ['icon' => 'success'],
         ];
     }
 

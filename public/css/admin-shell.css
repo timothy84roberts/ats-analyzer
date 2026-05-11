@@ -560,6 +560,7 @@ html[data-theme="dark"] .admin-topbar [data-theme-toggle] .admin-theme-sun {
     display: flex;
     align-items: center;
     gap: 10px;
+    height: 40px;
 }
 
 .admin-check input[type="checkbox"] {
@@ -842,9 +843,24 @@ html[data-theme="dark"] .admin-alert--warn {
     color: #d97706;
 }
 
+.admin-stat__icon--danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #dc2626;
+}
+
 .admin-stat__icon--muted {
     background: var(--admin-surface-2);
     color: var(--admin-text-muted);
+}
+
+.admin-stat__icon--primary {
+    background: rgba(13, 110, 253, 0.14);
+    color: #0d6efd;
+}
+
+.admin-stat__icon--success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
 }
 
 .admin-stat__icon--money {
@@ -989,8 +1005,8 @@ html[data-theme="dark"] .admin-alert--warn {
 
 .admin-pill--interview {
     /* primary */
-    background: var(--admin-accent-muted);
-    color: var(--admin-accent-text);
+    background: rgba(13, 110, 253, 0.14);
+    color: #0d6efd;
 }
 
 .admin-pill--success {
@@ -1075,6 +1091,34 @@ html[data-theme="dark"] .admin-alert--warn {
 .admin-pagination nav {
     display: flex;
     justify-content: flex-end;
+}
+
+/* Force pagination palette to follow app theme, not OS dark preference */
+.admin-pagination nav [class*="bg-white"] {
+    background: var(--admin-surface) !important;
+}
+
+.admin-pagination nav [class*="border-gray-300"] {
+    border-color: var(--admin-border) !important;
+}
+
+.admin-pagination nav [class*="text-gray-500"],
+.admin-pagination nav [class*="text-gray-700"] {
+    color: var(--admin-text-muted) !important;
+}
+
+.admin-pagination nav a:hover {
+    background: var(--admin-surface-2) !important;
+    color: var(--admin-text) !important;
+}
+
+html[data-theme="dark"] .admin-pagination nav [class*="bg-white"] {
+    background: var(--admin-surface-2) !important;
+}
+
+html[data-theme="dark"] .admin-pagination nav [class*="text-gray-500"],
+html[data-theme="dark"] .admin-pagination nav [class*="text-gray-700"] {
+    color: var(--admin-text) !important;
 }
 
 /* Chart card */
@@ -1171,6 +1215,15 @@ a.admin-settings-card:hover {
 .admin-settings-card__icon--muted {
     background: var(--admin-surface-2);
     color: var(--admin-text-muted);
+}
+
+.admin-settings-card__icon--info {
+    background: rgba(59, 130, 246, 0.14);
+    color: #2563eb;
+}
+
+html[data-theme="dark"] .admin-settings-card__icon--info {
+    color: #60a5fa;
 }
 
 .admin-settings-card__icon--warn {

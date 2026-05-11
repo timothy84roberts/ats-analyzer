@@ -4,22 +4,14 @@
     </x-slot>
 
     <div class="admin-card admin-card--pad">
-        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar">
+        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ useDate: @js((bool) ($useDate ?? true)) }">
             <div class="admin-field">
                 <span class="admin-label">{{ __('Period') }}</span>
                 <select name="period" class="admin-select">
                     @foreach (['day' => __('By day'), 'week' => __('By week'), 'month' => __('By month'), 'year' => __('By year')] as $val => $label)
-                        <option value="{{ $val }}" @selected(($period ?? 'month') === $val)>{{ $label }}</option>
+                        <option value="{{ $val }}" @selected(($period ?? 'day') === $val)>{{ $label }}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="admin-field">
-                <span class="admin-label">{{ __('From') }}</span>
-                <input type="date" name="from" value="{{ request('from', $from ?? '') }}" class="admin-input">
-            </div>
-            <div class="admin-field">
-                <span class="admin-label">{{ __('To') }}</span>
-                <input type="date" name="to" value="{{ request('to', $to ?? '') }}" class="admin-input">
             </div>
             <div class="admin-field">
                 <span class="admin-label">{{ __('Country') }}</span>
@@ -47,6 +39,22 @@
                         <option value="{{ $o }}" @selected(request('outcome_status') === $o)>{{ ucfirst($o) }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="admin-field">
+                <span class="admin-label">{{ __('Date option') }}</span>
+                <input type="hidden" name="use_date" value="0" :disabled="useDate">
+                <label class="admin-check">
+                    <input type="checkbox" name="use_date" value="1" x-model="useDate">
+                    <span>{{ __('Use date range') }}</span>
+                </label>
+            </div>
+            <div class="admin-field" x-show="useDate" x-cloak>
+                <span class="admin-label">{{ __('From') }}</span>
+                <input type="date" name="from" value="{{ $from ?? '' }}" class="admin-input" :disabled="!useDate">
+            </div>
+            <div class="admin-field" x-show="useDate" x-cloak>
+                <span class="admin-label">{{ __('To') }}</span>
+                <input type="date" name="to" value="{{ $to ?? '' }}" class="admin-input" :disabled="!useDate">
             </div>
             <div class="admin-field" style="align-self: flex-end;">
                 <span class="admin-label" style="opacity:0;">&nbsp;</span>
@@ -108,6 +116,12 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
             const accent = getComputedStyle(document.documentElement).getPropertyValue('--admin-accent').trim() || '#2ea884';
+            const outcomeColors = {
+                waiting: 'rgba(245, 158, 11, 0.45)',   // warning (light)
+                rejected: 'rgba(239, 68, 68, 0.45)',   // danger (light)
+                interview: 'rgba(13, 110, 253, 0.45)', // primary (light)
+                success: 'rgba(34, 197, 94, 0.45)',    // success (light)
+            };
             const timeLabels = @json($timeSeriesLabels ?? []);
             const timeValues = @json($timeSeriesValues ?? []);
             const countryChart = @json($statusByCountry ?? ['labels' => [], 'datasets' => []]);
@@ -130,7 +144,7 @@
                         data: { labels: countryChart.labels, datasets: countryChart.datasets.map((d, i) => ({
                             label: d.label,
                             data: d.data,
-                            backgroundColor: ['#94a3b8', '#ef4444', '#f59e0b', accent][i % 4],
+                            backgroundColor: outcomeColors[(d.label || '').toLowerCase()] || '#94a3b8',
                         })) },
                         options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } } }
                     });
@@ -141,7 +155,7 @@
                         data: { labels: platformChart.labels, datasets: platformChart.datasets.map((d, i) => ({
                             label: d.label,
                             data: d.data,
-                            backgroundColor: ['#94a3b8', '#ef4444', '#f59e0b', accent][i % 4],
+                            backgroundColor: outcomeColors[(d.label || '').toLowerCase()] || '#94a3b8',
                         })) },
                         options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } } }
                     });
@@ -149,7 +163,7 @@
                 if (funnelLabels.length) {
                     new Chart(document.getElementById('chartFunnel'), {
                         type: 'bar',
-                        data: { labels: funnelLabels, datasets: [{ label: @json(__('Count')), data: funnelValues, backgroundColor: accent }] },
+                        data: { labels: funnelLabels, datasets: [{ label: @json(__('Count')), data: funnelValues, backgroundColor: 'rgba(13, 110, 253, 0.35)' }] },
                         options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } }, y: { grid: { display: false } } } }
                     });
                 }

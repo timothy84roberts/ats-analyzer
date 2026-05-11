@@ -10,6 +10,8 @@
         'flag' => 'https://flagcdn.com/24x18/'.strtolower($country->code).'.png',
     ])->values();
     $selectedCountryId = (string) old('country_id', $application?->country_id ?? '');
+    $selectedPlatformId = (string) old('platform_id', $application?->platform_id ?? '');
+    $defaultAppliedOn = old('applied_on', $application?->applied_on?->format('Y-m-d') ?? now()->format('Y-m-d'));
 @endphp
 <div class="admin-form-stack" @if ($editing) x-data="{ outcome: @js(old('outcome_status', $application?->outcome_status ?? $defaultOutcome)) }" @endif>
     @unless ($editing)
@@ -88,11 +90,10 @@
         <script>
             function countryPicker(options, initialId) {
                 var list = Array.isArray(options) ? options : [];
-                var fallbackId = list.length > 0 ? list[0].id : '';
                 var normalizedInitialId = initialId == null ? '' : String(initialId);
                 var selected = list.some(function (item) {
                     return item.id === normalizedInitialId;
-                }) ? normalizedInitialId : fallbackId;
+                }) ? normalizedInitialId : '';
 
                 return {
                     open: false,
@@ -101,7 +102,7 @@
                     selected: function () {
                         return this.options.find(function (item) {
                             return item.id === this.selectedId;
-                        }.bind(this)) || this.options[0] || { name: '', code: '', flag: '' };
+                        }.bind(this)) || null;
                     },
                     pick: function (id) {
                         this.selectedId = id;
@@ -186,8 +187,11 @@
                     style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;"
                 >
                     <span style="display:flex; align-items:center; gap:10px; min-width:0;">
-                        <img :src="selected().flag" :alt="selected().name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
-                        <span x-text="selected().name + ' (' + selected().code + ')'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        <template x-if="selected()">
+                            <img :src="selected().flag" :alt="selected().name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                        </template>
+                        <span x-show="selected()" x-text="selected() ? (selected().name + ' (' + selected().code + ')') : ''" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        <span x-show="!selected()" style="color: var(--admin-text-muted);">{{ __('Select country') }}</span>
                     </span>
                     <span style="color: var(--admin-text-muted);">▾</span>
                 </button>
@@ -216,8 +220,9 @@
         <div class="admin-field">
             <label class="admin-label" for="platform_id">{{ __('Platform') }}</label>
             <select id="platform_id" name="platform_id" class="admin-select" required>
+                <option value="" disabled @selected($selectedPlatformId === '')>{{ __('Select platform') }}</option>
                 @foreach ($platforms as $platform)
-                    <option value="{{ $platform->id }}" @selected((string) old('platform_id', $application?->platform_id ?? '') === (string) $platform->id)>{{ $platform->name }}</option>
+                    <option value="{{ $platform->id }}" @selected($selectedPlatformId === (string) $platform->id)>{{ $platform->name }}</option>
                 @endforeach
             </select>
             <x-input-error :messages="$errors->get('platform_id')" class="mt-2" />
@@ -231,7 +236,7 @@
     <div class="admin-field-grid-2">
         <div class="admin-field">
             <label class="admin-label" for="applied_on">{{ __('Applied on') }}</label>
-            <input id="applied_on" class="admin-input" type="date" name="applied_on" value="{{ old('applied_on', $application?->applied_on?->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required>
+            <input id="applied_on" class="admin-input" type="date" name="applied_on" value="{{ $defaultAppliedOn }}" required>
             <x-input-error :messages="$errors->get('applied_on')" class="mt-2" />
         </div>
         <div class="admin-field">
