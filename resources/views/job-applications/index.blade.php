@@ -74,7 +74,20 @@
                         <tr>
                             <td><a href="{{ route('applications.show', $app) }}">{{ $app->title }}</a></td>
                             <td>{{ $app->company_name ?? '—' }}</td>
-                            <td>{{ $app->country?->name }}</td>
+                            <td>
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    @if ($app->country?->code)
+                                        <img
+                                            src="{{ 'https://flagcdn.com/24x18/'.strtolower($app->country->code).'.png' }}"
+                                            alt="{{ $app->country->name }} flag"
+                                            width="20"
+                                            height="14"
+                                            style="border-radius:2px; object-fit:cover; flex-shrink:0;"
+                                        >
+                                    @endif
+                                    <span>{{ $app->country?->name }}</span>
+                                </span>
+                            </td>
                             <td>{{ $app->platform?->name }}</td>
                             <td>
                                 @php($stageSlug = $app->pipelineStage?->slug ?? 'unknown')

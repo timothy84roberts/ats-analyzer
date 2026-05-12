@@ -29,7 +29,18 @@
             </div>
             <div class="admin-dl__row">
                 <dt class="admin-dl__dt">{{ __('Country / Platform') }}</dt>
-                <dd class="admin-dl__dd">{{ $application->country?->name }} — {{ $application->platform?->name }}</dd>
+                <dd class="admin-dl__dd" style="display: inline-flex; align-items: center; gap: 6px;">
+                    @if ($application->country?->code)
+                        <img
+                            src="{{ 'https://flagcdn.com/24x18/'.strtolower($application->country->code).'.png' }}"
+                            alt="{{ $application->country->name }} flag"
+                            width="20"
+                            height="14"
+                            style="border-radius:2px; object-fit:cover; flex-shrink:0;"
+                        >
+                    @endif
+                    <span>{{ $application->country?->name }} / {{ $application->platform?->name }}</span>
+                </dd>
             </div>
             <div class="admin-dl__row">
                 <dt class="admin-dl__dt">{{ __('Company') }}</dt>
@@ -62,8 +73,11 @@
         </dl>
     </div>
 
-    <div class="admin-subcard" style="margin-top: 20px;">
-        <h3 class="admin-subcard__title">{{ __('Notes') }}</h3>
+    <div class="admin-subcard" style="margin-top: 20px;" x-data="{ noteOpen: false }">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+            <h3 class="admin-subcard__title" style="margin: 0;">{{ __('Notes') }}</h3>
+            <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = true">{{ __('Add note') }}</button>
+        </div>
         <ul class="admin-activity" style="margin: 0;">
             @forelse ($application->notes as $note)
                 <li class="admin-activity__item" style="align-items: flex-start;">
@@ -78,6 +92,38 @@
                 </li>
             @endforelse
         </ul>
+
+        <template x-if="noteOpen">
+            <div
+                class="admin-modal-backdrop"
+                x-cloak
+                @click="noteOpen = false"
+                @keydown.escape.window="noteOpen = false"
+                style="position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100;"
+            >
+                <div
+                    class="admin-card admin-card--pad"
+                    @click.stop
+                    style="width: min(640px, 100%);"
+                >
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+                        <h3 style="margin: 0;">{{ __('Add note') }}</h3>
+                        <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = false">{{ __('Close') }}</button>
+                    </div>
+                    <form method="post" action="{{ route('applications.notes.store', $application) }}" style="margin-top: 14px; width: 100%;">
+                        @csrf
+                        <div class="admin-field">
+                            <label class="admin-label" for="note-body">{{ __('Note') }}</label>
+                            <textarea id="note-body" name="body" rows="5" class="admin-textarea" placeholder="{{ __('Write a note…') }}" required autofocus></textarea>
+                        </div>
+                        <div style="display:flex; gap: 10px; justify-content:flex-end; margin-top: 14px;">
+                            <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = false">{{ __('Cancel') }}</button>
+                            <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save note') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
     </div>
 
     @if ($application->hasResume())

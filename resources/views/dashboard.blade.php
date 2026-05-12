@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="admin-card admin-card--pad">
-        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ useDate: @js((bool) ($useDate ?? true)) }">
+        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ useDate: @js((bool) ($useDate ?? false)) }">
             <div class="admin-field">
                 <span class="admin-label">{{ __('Period') }}</span>
                 <select name="period" class="admin-select">

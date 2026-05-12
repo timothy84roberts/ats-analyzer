@@ -18,9 +18,7 @@ class DashboardService
             : 'day';
         $useDate = $this->resolveUseDate($input);
 
-        [$from, $to] = $useDate
-            ? $this->resolveRange($period, $input['from'] ?? null, $input['to'] ?? null)
-            : [null, null];
+        [$from, $to] = $this->resolveRange($period, $input['from'] ?? null, $input['to'] ?? null);
 
         $base = JobApplication::query()->where('user_id', $user->id);
         if ($useDate && $from && $to) {
@@ -88,7 +86,7 @@ class DashboardService
     private function resolveUseDate(array $input): bool
     {
         if (! array_key_exists('use_date', $input)) {
-            return true;
+            return false;
         }
 
         return filter_var($input['use_date'], FILTER_VALIDATE_BOOL);

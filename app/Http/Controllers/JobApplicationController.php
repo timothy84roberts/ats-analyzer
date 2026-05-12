@@ -36,7 +36,13 @@ class JobApplicationController extends Controller
                 $request->filled('outcome_status') && in_array($request->input('outcome_status'), JobApplication::outcomeStatuses(), true),
                 fn ($q) => $q->where('outcome_status', $request->input('outcome_status'))
             )
-            ->when($request->filled('q'), fn ($q) => $q->where('title', 'like', '%'.$request->input('q').'%'))
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $term = '%'.$request->input('q').'%';
+                $q->where(function ($sub) use ($term) {
+                    $sub->where('title', 'like', $term)
+                        ->orWhere('company_name', 'like', $term);
+                });
+            })
             ->latest('applied_on');
 
         /** @var LengthAwarePaginator<int, JobApplication> $paginator */
