@@ -11,11 +11,6 @@ use Illuminate\View\View;
 
 class PlatformController extends Controller
 {
-    public function __construct()
-    {
-        $this->authorizeResource(Platform::class, 'platform');
-    }
-
     public function index(): View
     {
         $platforms = Platform::query()->orderBy('sort_order')->orderBy('name')->paginate(20);

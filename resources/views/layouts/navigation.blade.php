@@ -15,19 +15,15 @@
                     <x-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                         {{ __('Applications') }}
                     </x-nav-link>
-                    @can('use-ats-lab')
-                        <x-nav-link :href="route('ats.index')" :active="request()->routeIs('ats.*')">
-                            {{ __('ATS') }}
-                        </x-nav-link>
-                    @endcan
-                    @can('manage-reference-data')
-                        <x-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
-                            {{ __('Countries') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('platforms.index')" :active="request()->routeIs('platforms.*')">
-                            {{ __('Platforms') }}
-                        </x-nav-link>
-                    @endcan
+                    <x-nav-link :href="route('ats-scanner.index')" :active="request()->routeIs('ats-scanner.*')">
+                        {{ __('Scan') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
+                        {{ __('Countries') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('platforms.index')" :active="request()->routeIs('platforms.*')">
+                        {{ __('Platforms') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -80,19 +76,15 @@
             <x-responsive-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                 {{ __('Applications') }}
             </x-responsive-nav-link>
-            @can('use-ats-lab')
-                <x-responsive-nav-link :href="route('ats.index')" :active="request()->routeIs('ats.*')">
-                    {{ __('ATS') }}
-                </x-responsive-nav-link>
-            @endcan
-            @can('manage-reference-data')
-                <x-responsive-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
-                    {{ __('Countries') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('platforms.index')" :active="request()->routeIs('platforms.*')">
-                    {{ __('Platforms') }}
-                </x-responsive-nav-link>
-            @endcan
+            <x-responsive-nav-link :href="route('ats-scanner.index')" :active="request()->routeIs('ats-scanner.*')">
+                {{ __('Scan') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
+                {{ __('Countries') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('platforms.index')" :active="request()->routeIs('platforms.*')">
+                {{ __('Platforms') }}
+            </x-responsive-nav-link>
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">

@@ -53,19 +53,4 @@
             <span class="admin-settings-card__chevron" aria-hidden="true">→</span>
         </a>
     </div>
-
-    @can('use-ats-lab')
-        <div class="admin-settings-grid" style="margin-top: 20px;">
-            <a href="{{ route('ats.index') }}" class="admin-settings-card">
-                <div class="admin-settings-card__icon admin-settings-card__icon--warn" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v4.125c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 013 17.25v-4.125z"/></svg>
-                </div>
-                <div class="admin-settings-card__body">
-                    <h2 class="admin-settings-card__title">{{ __('ATS lab') }}</h2>
-                    <p class="admin-settings-card__desc">{{ __('Testing tools for ATS analysis (when enabled for your account).') }}</p>
-                </div>
-                <span class="admin-settings-card__chevron" aria-hidden="true">→</span>
-            </a>
-        </div>
-    @endcan
 </x-app-layout>

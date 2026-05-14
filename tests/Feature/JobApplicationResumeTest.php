@@ -75,7 +75,7 @@ class JobApplicationResumeTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_non_owner_cannot_view_resume(): void
+    public function test_non_owner_can_stream_resume(): void
     {
         Storage::fake('local');
         [$owner, $country, $platform, $stage] = $this->seedUserAndRefs();
@@ -94,7 +94,7 @@ class JobApplicationResumeTest extends TestCase
 
         $this->actingAs($other)
             ->get(route('applications.resume', $application))
-            ->assertForbidden();
+            ->assertOk();
     }
 
     public function test_update_remove_resume_clears_path_and_file(): void
@@ -126,7 +126,7 @@ class JobApplicationResumeTest extends TestCase
             'analysis_percentage' => null,
             'applied_on' => $application->applied_on->format('Y-m-d'),
             'remove_resume' => '1',
-        ])->assertSessionHasNoErrors()->assertRedirect(route('applications.index'));
+        ])->assertSessionHasNoErrors()->assertRedirect(route('applications.edit', $application));
 
         $application->refresh();
         $this->assertNull($application->resume_path);

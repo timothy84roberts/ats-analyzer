@@ -11,8 +11,6 @@ class JobApplicationNoteController extends Controller
 {
     public function store(Request $request, JobApplication $application): RedirectResponse
     {
-        $this->authorize('update', $application);
-
         $data = $request->validate([
             'body' => ['required', 'string', 'max:20000'],
         ]);
@@ -31,4 +29,3 @@ class JobApplicationNoteController extends Controller
         return redirect()->route('applications.index')->with('status', 'Note added.');
     }
 }
-

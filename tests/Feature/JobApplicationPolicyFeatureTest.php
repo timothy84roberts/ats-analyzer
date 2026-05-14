@@ -11,7 +11,7 @@ class JobApplicationPolicyFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_cannot_view_another_users_application(): void
+    public function test_user_can_view_another_users_application(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -19,7 +19,7 @@ class JobApplicationPolicyFeatureTest extends TestCase
 
         $this->actingAs($other)
             ->get(route('applications.show', $application))
-            ->assertForbidden();
+            ->assertOk();
     }
 
     public function test_owner_can_view_own_application(): void

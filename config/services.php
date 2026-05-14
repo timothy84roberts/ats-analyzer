@@ -31,4 +31,22 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ApyHub (SharpAPI via ApyHub) — resume / job match score
+    |--------------------------------------------------------------------------
+    */
+    'apyhub' => [
+        'submit_url' => env(
+            'APYHUB_RESUME_MATCH_URL',
+            'https://api.apyhub.com/sharpapi/api/v1/hr/resume_job_match_score'
+        ),
+        'token' => env('APYHUB_TOKEN', ''),
+        'timeout' => (int) env('APYHUB_HTTP_TIMEOUT', 60),
+        'poll_interval_seconds' => (int) env('APYHUB_POLL_INTERVAL', 3),
+        'poll_max_seconds' => (int) env('APYHUB_POLL_MAX', 180),
+        'retry_max' => (int) env('APYHUB_RETRY_MAX', 5),
+        'retry_base_ms' => (int) env('APYHUB_RETRY_BASE_MS', 500),
+    ],
+
 ];

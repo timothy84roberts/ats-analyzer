@@ -12,11 +12,6 @@ use Throwable;
 
 class CountryController extends Controller
 {
-    public function __construct()
-    {
-        $this->authorizeResource(Country::class, 'country');
-    }
-
     public function index(): View
     {
         $countries = Country::query()->orderBy('sort_order')->orderBy('name')->paginate(20);

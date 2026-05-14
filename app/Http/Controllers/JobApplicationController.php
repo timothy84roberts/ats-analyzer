@@ -8,10 +8,10 @@ use App\Models\Country;
 use App\Models\JobApplication;
 use App\Models\PipelineStage;
 use App\Models\Platform;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -19,16 +19,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class JobApplicationController extends Controller
 {
-    public function __construct()
-    {
-        $this->authorizeResource(JobApplication::class, 'application');
-    }
-
     public function index(Request $request): View
     {
         $query = JobApplication::query()
             ->with(['country', 'platform', 'pipelineStage'])
-            ->where('user_id', $request->user()->id)
             ->when($request->filled('country_id'), fn ($q) => $q->where('country_id', $request->integer('country_id')))
             ->when($request->filled('platform_id'), fn ($q) => $q->where('platform_id', $request->integer('platform_id')))
             ->when($request->filled('applied_on'), fn ($q) => $q->whereDate('applied_on', $request->input('applied_on')))
@@ -146,8 +140,6 @@ class JobApplicationController extends Controller
 
     public function showResume(JobApplication $application): BinaryFileResponse
     {
-        $this->authorize('view', $application);
-
         /** @var FilesystemAdapter $disk */
         $disk = Storage::disk('local');
 
