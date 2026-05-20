@@ -539,6 +539,11 @@ html[data-theme="dark"] .admin-topbar [data-theme-toggle] .admin-theme-sun {
     gap: 20px;
 }
 
+/* Book-call modal: extra space between title / description / datetime blocks */
+.admin-book-call-form.admin-form-stack {
+    gap: 26px;
+}
+
 .admin-form-page {
     max-width: 720px;
 }
@@ -816,12 +821,26 @@ html[data-theme="dark"] .admin-alert--warn {
     margin-bottom: 8px;
 }
 
+.admin-stat__value-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 10px;
+}
+
 .admin-stat__value {
     font-size: 1.75rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--admin-text);
     line-height: 1.1;
+}
+
+.admin-stat__pct {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--admin-text-muted);
+    letter-spacing: -0.01em;
 }
 
 .admin-stat__icon {

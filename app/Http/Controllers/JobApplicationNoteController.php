@@ -28,4 +28,15 @@ class JobApplicationNoteController extends Controller
 
         return redirect()->route('applications.index')->with('status', 'Note added.');
     }
+
+    public function destroy(JobApplication $application, JobApplicationNote $note): RedirectResponse
+    {
+        if ($note->job_application_id !== $application->id) {
+            abort(404);
+        }
+
+        $note->delete();
+
+        return redirect()->route('applications.show', $application)->with('status', __('Note deleted.'));
+    }
 }

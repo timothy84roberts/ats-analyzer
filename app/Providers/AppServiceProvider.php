@@ -6,6 +6,8 @@ use App\Models\JobApplication;
 use App\Observers\JobApplicationObserver;
 use App\Services\Ats\Providers\ApyHubAtsProvider;
 use App\Services\Ats\Providers\AtsProvider;
+use App\View\Composers\UpcomingCallBannerComposer;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,5 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         JobApplication::observe(JobApplicationObserver::class);
+
+        View::composer('layouts.app', UpcomingCallBannerComposer::class);
     }
 }

@@ -63,11 +63,25 @@
         </form>
     </div>
 
+    @php
+        $outcomeStatuses = \App\Models\JobApplication::outcomeStatuses();
+        $outcomeStatTotal = collect($outcomeStatuses)->sum(fn (string $status) => (int) ($totalsByOutcome[$status] ?? 0));
+    @endphp
+
     <div class="admin-stat-grid">
         @foreach (\App\Models\JobApplication::outcomeStatPresentation() as $o => $meta)
+            @php
+                $outcomeCount = (int) ($totalsByOutcome[$o] ?? 0);
+                $outcomePercent = $outcomeStatTotal > 0
+                    ? round($outcomeCount / $outcomeStatTotal * 100, 1)
+                    : 0.0;
+            @endphp
             <div class="admin-stat">
                 <div class="admin-stat__label">{{ ucfirst($o) }}</div>
-                <div class="admin-stat__value">{{ $totalsByOutcome[$o] ?? 0 }}</div>
+                <div class="admin-stat__value-row">
+                    <span class="admin-stat__value">{{ $outcomeCount }}</span>
+                    <span class="admin-stat__pct">{{ $outcomePercent }}%</span>
+                </div>
                 <div class="admin-stat__icon admin-stat__icon--{{ $meta['icon'] }}">
                     @if ($o === \App\Models\JobApplication::OUTCOME_WAITING)
                         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

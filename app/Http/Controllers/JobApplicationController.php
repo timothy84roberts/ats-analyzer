@@ -100,6 +100,7 @@ class JobApplicationController extends Controller
             'pipelineStage',
             'stageHistories.pipelineStage',
             'notes.user',
+            'calls.user',
         ]);
 
         return view('job-applications.show', compact('application'));

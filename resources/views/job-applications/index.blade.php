@@ -66,7 +66,7 @@
                         <th style="width: 170px;">{{ __('Stage') }}</th>
                         <th>{{ __('Outcome') }}</th>
                         <th style="width: 120px;">{{ __('Applied') }}</th>
-                        <th style="width: 220px;">{{ __('Actions') }}</th>
+                        <th style="width: 300px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,7 +100,7 @@
                             </td>
                             <td>{{ $app->applied_on->format('Y-m-d') }}</td>
                             <td class="whitespace-nowrap">
-                                <div class="admin-table-actions" x-data="{ noteOpen: false }" style="flex-wrap: nowrap; gap: 6px;">
+                                <div class="admin-table-actions" x-data="{ noteOpen: false, callOpen: false }" style="flex-wrap: wrap; gap: 6px;">
                                     <a
                                         href="{{ route('applications.edit', ['application' => $app, 'return_to' => request()->fullUrl()]) }}"
                                         class="admin-btn admin-btn--ghost"
@@ -114,6 +114,24 @@
                                         </svg>
                                     </a>
                                     <button type="button" class="admin-btn admin-btn--ghost" style="height: 36px; padding: 0 14px;" @click="noteOpen = true">{{ __('Add note') }}</button>
+                                    <button
+                                        type="button"
+                                        class="admin-btn admin-btn--ghost"
+                                        aria-label="{{ __('Book call') }}"
+                                        title="{{ __('Book call') }}"
+                                        style="height: 36px; width: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;"
+                                        @click="callOpen = true"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path
+                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+                                                stroke="currentColor"
+                                                stroke-width="1.7"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            />
+                                        </svg>
+                                    </button>
                                     <form action="{{ route('applications.destroy', $app) }}" method="post" onsubmit="return confirm(@json(__('Delete this application?')));">
                                         @csrf
                                         @method('DELETE')
@@ -159,6 +177,46 @@
                                                     <div style="display:flex; gap: 10px; justify-content:flex-end; margin-top: 14px;">
                                                         <button type="button" class="admin-btn admin-btn--ghost" @click="noteOpen = false">{{ __('Cancel') }}</button>
                                                         <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save note') }}</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="callOpen">
+                                        <div
+                                            class="admin-modal-backdrop"
+                                            x-cloak
+                                            @click="callOpen = false"
+                                            @keydown.escape.window="callOpen = false"
+                                            style="position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100;"
+                                        >
+                                            <div
+                                                class="admin-card admin-card--pad"
+                                                @click.stop
+                                                style="width: min(640px, 100%);"
+                                            >
+                                                <div style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+                                                    <h3 style="margin: 0;">{{ __('Book call') }}</h3>
+                                                    <button type="button" class="admin-btn admin-btn--ghost" @click="callOpen = false">{{ __('Close') }}</button>
+                                                </div>
+                                                <form method="post" action="{{ route('applications.calls.store', $app) }}" class="admin-form-stack admin-book-call-form" style="margin-top: 18px; width: 100%;">
+                                                    @csrf
+                                                    <div class="admin-field">
+                                                        <label class="admin-label" for="call-title-{{ $app->id }}">{{ __('Title') }}</label>
+                                                        <input id="call-title-{{ $app->id }}" type="text" name="title" class="admin-input" placeholder="{{ __('e.g. Phone screen with recruiter') }}" required>
+                                                    </div>
+                                                    <div class="admin-field">
+                                                        <label class="admin-label" for="call-desc-{{ $app->id }}">{{ __('Description') }}</label>
+                                                        <textarea id="call-desc-{{ $app->id }}" name="description" rows="4" class="admin-textarea" placeholder="{{ __('Agenda, link, dial-in…') }}"></textarea>
+                                                    </div>
+                                                    <div class="admin-field">
+                                                        <label class="admin-label" for="call-when-{{ $app->id }}">{{ __('Date & time') }}</label>
+                                                        <input id="call-when-{{ $app->id }}" type="datetime-local" name="scheduled_at" class="admin-input" required>
+                                                    </div>
+                                                    <div style="display:flex; gap: 10px; justify-content:flex-end; padding-top: 4px;">
+                                                        <button type="button" class="admin-btn admin-btn--ghost" @click="callOpen = false">{{ __('Cancel') }}</button>
+                                                        <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save call') }}</button>
                                                     </div>
                                                 </form>
                                             </div>

@@ -135,4 +135,9 @@ class JobApplication extends Model
     {
         return $this->hasMany(JobApplicationNote::class)->latest();
     }
+
+    public function calls(): HasMany
+    {
+        return $this->hasMany(JobApplicationCall::class)->orderBy('scheduled_at');
+    }
 }

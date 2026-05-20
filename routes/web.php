@@ -4,6 +4,7 @@ use App\Http\Controllers\AtsAnalysisController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\JobApplicationCallController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\JobApplicationNoteController;
 use App\Http\Controllers\PlatformController;
@@ -26,6 +27,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('applications.resume');
     Route::post('applications/{application}/notes', [JobApplicationNoteController::class, 'store'])
         ->name('applications.notes.store');
+    Route::delete('applications/{application}/notes/{note}', [JobApplicationNoteController::class, 'destroy'])
+        ->name('applications.notes.destroy');
+    Route::post('applications/{application}/calls', [JobApplicationCallController::class, 'store'])
+        ->name('applications.calls.store');
+    Route::delete('applications/{application}/calls/{call}', [JobApplicationCallController::class, 'destroy'])
+        ->name('applications.calls.destroy');
     Route::resource('applications', JobApplicationController::class);
 
     Route::get('/settings', SettingsController::class)->name('settings.index');

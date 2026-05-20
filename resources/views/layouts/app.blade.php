@@ -35,6 +35,8 @@
                 @include('layouts.admin-topbar')
 
                 <main class="admin-content">
+                    @include('layouts.partials.upcoming-call-banner')
+
                     @isset($header)
                         <div class="admin-page-head">
                             {{ $header }}
