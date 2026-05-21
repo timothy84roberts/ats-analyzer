@@ -37,7 +37,7 @@ class JobApplicationController extends Controller
                         ->orWhere('company_name', 'like', $term);
                 });
             })
-            ->latest('applied_on');
+            ->latest('created_at');
 
         /** @var LengthAwarePaginator<int, JobApplication> $paginator */
         $paginator = $query->paginate(15);
