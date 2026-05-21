@@ -1704,3 +1704,44 @@ html[data-theme="dark"] .ats-scan-loading {
     color: var(--admin-text-muted);
     line-height: 1.45;
 }
+
+/* ----- Financial page ----- */
+.fin-stat-row {
+    display: grid;
+    gap: 20px;
+    margin-top: 24px;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .fin-stat-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .fin-stat-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.fin-goal-card {
+    border-left: 3px solid var(--admin-border);
+    transition: border-color 0.2s ease;
+}
+
+.fin-goal-card--met {
+    border-left-color: #22c55e;
+}
+
+.fin-goal-card--unmet {
+    border-left-color: #ef4444;
+}
+
+.fin-goal-meta {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--admin-text-muted);
+    line-height: 1.4;
+    padding-right: 48px;
+}

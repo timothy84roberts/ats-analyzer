@@ -3,6 +3,7 @@
 use App\Http\Controllers\AtsAnalysisController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobApplicationCallController;
 use App\Http\Controllers\JobApplicationController;
@@ -39,6 +40,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('settings/countries', CountryController::class)->only(['index', 'create', 'store', 'destroy']);
     Route::resource('settings/platforms', PlatformController::class)->except(['show']);
+
+    Route::get('/financial', [FinancialController::class, 'index'])->name('financial.index');
+    Route::get('/financial/pdf', [FinancialController::class, 'downloadPdf'])->name('financial.pdf');
+    Route::post('/financial/transactions', [FinancialController::class, 'store'])->name('financial.transactions.store');
+    Route::put('/financial/transactions/{transaction}', [FinancialController::class, 'update'])->name('financial.transactions.update');
+    Route::delete('/financial/transactions/{transaction}', [FinancialController::class, 'destroy'])->name('financial.transactions.destroy');
+    Route::post('/financial/settings', [FinancialController::class, 'updateSettings'])->name('financial.settings.update');
 
     Route::get('/ats-scanner', [AtsAnalysisController::class, 'index'])->name('ats-scanner.index');
     Route::post('/ats-scanner/analyze', [AtsAnalysisController::class, 'analyze'])->name('ats-scanner.analyze');
