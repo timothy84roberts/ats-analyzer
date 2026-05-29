@@ -133,7 +133,11 @@
     <div class="header">
         <div class="header-left">
             <h1>Financial Report</h1>
-            <div class="subtitle">{{ $monthDate->format('F Y') }} &nbsp;·&nbsp; {{ $user->name }}</div>
+            <div class="subtitle">
+                {{ $monthDate->format('F Y') }}
+                ({{ $periodStart->format('d M') }} – {{ $periodEnd->format('d M Y') }})
+                &nbsp;·&nbsp; {{ $user->name }}
+            </div>
         </div>
         <div class="header-right">
             <div class="generated">Generated {{ now()->format('d M Y, H:i') }}</div>

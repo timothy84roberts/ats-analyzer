@@ -7,17 +7,13 @@
                 </div>
                 <div>
                     <h1 style="margin:0;">{{ __('Financial') }}</h1>
-                    <div style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:1px;">{{ $monthDate->format('F Y') }}</div>
+                    <div style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:1px;">
+                        {{ $monthDate->format('F Y') }}
+                        <span style="opacity:0.85;">· {{ $periodStart->format('d M') }} – {{ $periodEnd->format('d M Y') }}</span>
+                    </div>
                 </div>
             </div>
 
-            {{-- PDF Download button --}}
-            <a href="{{ route('financial.pdf', ['month' => $selectedMonth]) }}"
-               style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--admin-accent);color:#fff;border-radius:8px;font-size:0.8rem;font-weight:600;text-decoration:none;white-space:nowrap;transition:opacity .15s;"
-               onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-                {{ __('Download PDF') }}
-            </a>
         </div>
     </x-slot>
 
@@ -123,6 +119,13 @@
                         <option value="{{ $val }}" @selected($val === $selectedMonth)>{{ $label }}</option>
                     @endforeach
                 </select>
+                <a href="{{ route('financial.pdf', ['month' => $selectedMonth]) }}"
+                   class="admin-btn admin-btn--ghost"
+                   style="height:38px;padding:0 14px;gap:6px;font-size:0.8rem;font-weight:600;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;"
+                   title="{{ __('Download PDF for') }} {{ $monthDate->format('F Y') }}">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                    {{ __('Download PDF') }}
+                </a>
                 <button type="button" class="admin-btn admin-btn--primary" @click="openAdd()" style="gap:6px;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     {{ __('Add') }}
@@ -152,6 +155,10 @@
                     </thead>
                     <tbody>
                         @foreach ($monthTransactions as $tx)
+                            @php
+                                $periods = app(\App\Services\FinancialPeriodService::class);
+                                $txOverride = $periods->hasManualOverride($tx->transacted_at, $tx->reporting_month);
+                            @endphp
                             <tr>
                                 <td style="font-weight:500;">{{ $tx->title }}</td>
                                 <td>
@@ -170,7 +177,14 @@
                                 <td style="font-variant-numeric:tabular-nums;font-weight:600;color:{{ $tx->type === 'income' ? '#16a34a' : '#dc2626' }};">
                                     {{ $tx->type === 'income' ? '+' : '−' }}{{ number_format($tx->amount, 2) }}
                                 </td>
-                                <td style="color:var(--admin-text-muted);font-size:0.875rem;">{{ $tx->transacted_at->format('d M Y') }}</td>
+                                <td style="color:var(--admin-text-muted);font-size:0.875rem;">
+                                    {{ $tx->transacted_at->format('d M Y') }}
+                                    @if ($txOverride)
+                                        <span class="admin-pill" style="display:inline-block;margin-left:6px;font-size:0.7rem;background:rgba(59,130,246,0.1);color:#2563eb;">
+                                            {{ __('In :month', ['month' => $periods->reportingMonthLabel($tx->reporting_month)]) }}
+                                        </span>
+                                    @endif
+                                </td>
                                 <td style="color:var(--admin-text-muted);font-size:0.8125rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     {{ $tx->note ?: '—' }}
                                 </td>
@@ -187,7 +201,8 @@
                                                 amount: '{{ $tx->amount }}',
                                                 type: '{{ $tx->type }}',
                                                 note: {{ Js::from($tx->note ?? '') }},
-                                                transacted_at: '{{ $tx->transacted_at->format('Y-m-d') }}'
+                                                transacted_at: '{{ $tx->transacted_at->format('Y-m-d') }}',
+                                                assign_to_previous_month: {{ $txOverride ? 'true' : 'false' }}
                                             })"
                                         >
                                             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
@@ -254,7 +269,14 @@
                         </div>
                         <div class="admin-field">
                             <label class="admin-label" for="add_date">{{ __('Date') }}</label>
-                            <input id="add_date" type="date" name="transacted_at" class="admin-input" value="{{ $monthDate->format('Y-m') }}-01" required>
+                            <input id="add_date" type="date" name="transacted_at" class="admin-input" value="{{ now()->format('Y-m-d') }}" required @change="syncAddOverride()">
+                        </div>
+                        <div class="admin-field" x-show="addOverrideVisible" x-cloak style="padding:12px 14px;border-radius:8px;background:var(--admin-surface-muted, #f8fafc);border:1px solid var(--admin-border, #e5e7eb);">
+                            <p style="margin:0 0 10px;font-size:0.8rem;color:var(--admin-text-muted);" x-text="addOverrideHint"></p>
+                            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:0.875rem;color:var(--admin-text);">
+                                <input type="checkbox" name="assign_to_previous_month" value="1" x-model="addAssignPrevious" style="margin-top:3px;">
+                                <span x-text="addOverrideLabel"></span>
+                            </label>
                         </div>
                         <div class="admin-field">
                             <label class="admin-label" for="add_note">{{ __('Note') }} <span style="font-weight:400;text-transform:none;">({{ __('optional') }})</span></label>
@@ -315,7 +337,14 @@
                         </div>
                         <div class="admin-field">
                             <label class="admin-label" for="edit_date">{{ __('Date') }}</label>
-                            <input id="edit_date" type="date" name="transacted_at" class="admin-input" x-model="editTx.transacted_at" required>
+                            <input id="edit_date" type="date" name="transacted_at" class="admin-input" x-model="editTx.transacted_at" required @change="syncEditOverride()">
+                        </div>
+                        <div class="admin-field" x-show="editOverrideVisible" x-cloak style="padding:12px 14px;border-radius:8px;background:var(--admin-surface-muted, #f8fafc);border:1px solid var(--admin-border, #e5e7eb);">
+                            <p style="margin:0 0 10px;font-size:0.8rem;color:var(--admin-text-muted);" x-text="editOverrideHint"></p>
+                            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:0.875rem;color:var(--admin-text);">
+                                <input type="checkbox" name="assign_to_previous_month" value="1" x-model="editAssignPrevious" style="margin-top:3px;">
+                                <span x-text="editOverrideLabel"></span>
+                            </label>
                         </div>
                         <div class="admin-field">
                             <label class="admin-label" for="edit_note">{{ __('Note') }} <span style="font-weight:400;text-transform:none;">({{ __('optional') }})</span></label>
@@ -432,23 +461,75 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
+            const fiscalPeriodEndDay = {{ \App\Services\FinancialPeriodService::PERIOD_END_DAY }};
+
             function txManager() {
                 return {
                     // Add modal
                     addShow: false,
                     addType: 'income',
-                    openAdd() { this.addShow = true; },
+                    addAssignPrevious: false,
+                    addOverrideVisible: false,
+                    addOverrideHint: '',
+                    addOverrideLabel: '',
+                    openAdd() {
+                        this.addShow = true;
+                        this.addAssignPrevious = false;
+                        this.$nextTick(() => this.syncAddOverride());
+                    },
                     closeAdd() { this.addShow = false; },
+                    syncAddOverride() {
+                        const state = fiscalOverrideState(document.getElementById('add_date')?.value);
+                        this.addOverrideVisible = state.visible;
+                        this.addOverrideHint = state.hint;
+                        this.addOverrideLabel = state.label;
+                        if (!state.visible) this.addAssignPrevious = false;
+                    },
                     // Edit modal
                     editShow: false,
-                    editTx: { id: null, title: '', amount: '', type: 'income', note: '', transacted_at: '' },
-                    openEdit(tx) { this.editTx = { ...tx }; this.editShow = true; },
+                    editTx: { id: null, title: '', amount: '', type: 'income', note: '', transacted_at: '', assign_to_previous_month: false },
+                    editAssignPrevious: false,
+                    editOverrideVisible: false,
+                    editOverrideHint: '',
+                    editOverrideLabel: '',
+                    openEdit(tx) {
+                        this.editTx = { ...tx };
+                        this.editAssignPrevious = !!tx.assign_to_previous_month;
+                        this.editShow = true;
+                        this.$nextTick(() => this.syncEditOverride());
+                    },
                     closeEdit() { this.editShow = false; },
+                    syncEditOverride() {
+                        const state = fiscalOverrideState(this.editTx.transacted_at);
+                        this.editOverrideVisible = state.visible;
+                        this.editOverrideHint = state.hint;
+                        this.editOverrideLabel = state.label;
+                        if (!state.visible) this.editAssignPrevious = false;
+                    },
                     // Delete confirm modal
                     deleteShow: false,
                     deleteTx: { id: null, title: '', action: '' },
                     openDelete(id, title, action) { this.deleteTx = { id, title, action }; this.deleteShow = true; },
                     closeDelete() { this.deleteShow = false; },
+                };
+            }
+
+            function fiscalOverrideState(dateStr) {
+                if (!dateStr) {
+                    return { visible: false, hint: '', label: '' };
+                }
+                const [y, m, d] = dateStr.split('-').map(Number);
+                if (d <= fiscalPeriodEndDay) {
+                    return { visible: false, hint: '', label: '' };
+                }
+                const autoDate = new Date(y, m, 1);
+                const prevDate = new Date(y, m - 1, 1);
+                const autoLabel = autoDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+                const prevLabel = prevDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+                return {
+                    visible: true,
+                    hint: `{{ __('Normally counted in') }} ${autoLabel}`,
+                    label: `{{ __('Count in previous month') }} (${prevLabel})`,
                 };
             }
 

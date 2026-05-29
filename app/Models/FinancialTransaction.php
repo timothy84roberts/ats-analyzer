@@ -14,6 +14,7 @@ class FinancialTransaction extends Model
         'type',
         'note',
         'transacted_at',
+        'reporting_month',
     ];
 
     protected $casts = [

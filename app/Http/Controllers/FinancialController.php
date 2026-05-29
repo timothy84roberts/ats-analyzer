@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FinancialSetting;
 use App\Models\FinancialTransaction;
+use App\Services\FinancialPeriodService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,20 +14,22 @@ use Illuminate\View\View;
 
 class FinancialController extends Controller
 {
+    public function __construct(
+        private readonly FinancialPeriodService $periods,
+    ) {}
+
     public function index(Request $request): View
     {
         $user = auth()->user();
 
-        // Resolve selected month first
-        $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
+        $selectedMonth = $request->get('month', $this->periods->currentReportingMonth());
         try {
             $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
         } catch (\Exception $e) {
-            $monthDate = Carbon::now()->startOfMonth();
+            $monthDate = Carbon::createFromFormat('Y-m', $this->periods->currentReportingMonth())->startOfMonth();
             $selectedMonth = $monthDate->format('Y-m');
         }
 
-        // Load settings for the selected month; inherit most-recent prior values if none exist yet
         $settings = FinancialSetting::where('user_id', $user->id)
             ->where('year_month', $selectedMonth)
             ->first();
@@ -45,11 +48,12 @@ class FinancialController extends Controller
             ]);
         }
 
-        $monthStart = $monthDate->copy()->startOfMonth()->toDateString();
-        $monthEnd   = $monthDate->copy()->endOfMonth()->toDateString();
+        $bounds = $this->periods->periodBounds($selectedMonth);
+        $periodStart = $bounds['start'];
+        $periodEnd   = $bounds['end'];
 
         $monthTransactions = FinancialTransaction::where('user_id', $user->id)
-            ->whereBetween('transacted_at', [$monthStart, $monthEnd])
+            ->where('reporting_month', $selectedMonth)
             ->orderBy('transacted_at', 'desc')
             ->orderBy('id', 'desc')
             ->get();
@@ -61,31 +65,29 @@ class FinancialController extends Controller
         $defaultMet    = $monthNet >= (float) $settings->default_remaining;
         $additionalMet = ($monthNet - (float) $settings->default_remaining) >= (float) $settings->additional_remaining;
 
-        // Month selector options (last 24 months, newest first)
         $monthOptions = [];
+        $cursor = Carbon::createFromFormat('Y-m', $this->periods->currentReportingMonth())->startOfMonth();
         for ($i = 0; $i < 24; $i++) {
-            $m = Carbon::now()->subMonths($i);
-            $monthOptions[$m->format('Y-m')] = $m->format('F Y');
+            $ym = $cursor->copy()->subMonths($i)->format('Y-m');
+            $monthOptions[$ym] = Carbon::createFromFormat('Y-m', $ym)->format('F Y');
         }
 
-        // 12-month chart data (always relative to today)
-        $now = Carbon::now();
+        $currentFiscal = $this->periods->currentReportingMonth();
         $chartLabels  = [];
         $chartIncome  = [];
         $chartExpense = [];
 
+        $chartCursor = Carbon::createFromFormat('Y-m', $currentFiscal)->startOfMonth();
         for ($i = 11; $i >= 0; $i--) {
-            $month = $now->copy()->subMonths($i);
-            $start = $month->copy()->startOfMonth()->toDateString();
-            $end   = $month->copy()->endOfMonth()->toDateString();
+            $ym = $chartCursor->copy()->subMonths($i)->format('Y-m');
 
             $rows = FinancialTransaction::where('user_id', $user->id)
-                ->whereBetween('transacted_at', [$start, $end])
+                ->where('reporting_month', $ym)
                 ->selectRaw('type, SUM(amount) as total')
                 ->groupBy('type')
                 ->pluck('total', 'type');
 
-            $chartLabels[]  = $month->format('M Y');
+            $chartLabels[]  = Carbon::createFromFormat('Y-m', $ym)->format('M Y');
             $chartIncome[]  = (float) ($rows['income'] ?? 0);
             $chartExpense[] = (float) ($rows['expense'] ?? 0);
         }
@@ -104,6 +106,8 @@ class FinancialController extends Controller
             'selectedMonth',
             'monthOptions',
             'monthDate',
+            'periodStart',
+            'periodEnd',
         ));
     }
 
@@ -111,19 +115,20 @@ class FinancialController extends Controller
     {
         $user = auth()->user();
 
-        $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
+        $selectedMonth = $request->get('month', $this->periods->currentReportingMonth());
         try {
             $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
         } catch (\Exception $e) {
-            $monthDate = Carbon::now()->startOfMonth();
+            $monthDate = Carbon::createFromFormat('Y-m', $this->periods->currentReportingMonth())->startOfMonth();
             $selectedMonth = $monthDate->format('Y-m');
         }
 
-        $monthStart = $monthDate->copy()->startOfMonth()->toDateString();
-        $monthEnd   = $monthDate->copy()->endOfMonth()->toDateString();
+        $bounds = $this->periods->periodBounds($selectedMonth);
+        $periodStart = $bounds['start'];
+        $periodEnd   = $bounds['end'];
 
         $transactions = FinancialTransaction::where('user_id', $user->id)
-            ->whereBetween('transacted_at', [$monthStart, $monthEnd])
+            ->where('reporting_month', $selectedMonth)
             ->orderBy('transacted_at', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -143,6 +148,7 @@ class FinancialController extends Controller
             'user', 'monthDate', 'transactions',
             'monthIncome', 'monthExpense', 'monthNet',
             'settings', 'defaultMet', 'additionalMet',
+            'periodStart', 'periodEnd',
         ))->setPaper('a4', 'portrait');
 
         $filename = 'financial-' . $selectedMonth . '.pdf';
@@ -153,16 +159,25 @@ class FinancialController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title'          => 'required|string|max:255',
-            'amount'         => 'required|numeric|min:0.01',
-            'type'           => 'required|in:income,expense',
-            'note'           => 'nullable|string|max:1000',
-            'transacted_at'  => 'required|date',
+            'title'                     => 'required|string|max:255',
+            'amount'                    => 'required|numeric|min:0.01',
+            'type'                      => 'required|in:income,expense',
+            'note'                      => 'nullable|string|max:1000',
+            'transacted_at'             => 'required|date',
+            'assign_to_previous_month'  => 'sometimes|boolean',
         ]);
 
+        $date = Carbon::parse($validated['transacted_at']);
+        $assignToPrevious = $request->boolean('assign_to_previous_month');
+
         FinancialTransaction::create([
-            ...$validated,
-            'user_id' => auth()->id(),
+            'title'            => $validated['title'],
+            'amount'           => $validated['amount'],
+            'type'             => $validated['type'],
+            'note'             => $validated['note'] ?? null,
+            'transacted_at'    => $validated['transacted_at'],
+            'reporting_month'  => $this->periods->resolveReportingMonth($date, $assignToPrevious),
+            'user_id'          => auth()->id(),
         ]);
 
         return back()->with('status', __('Transaction added.'));
@@ -173,14 +188,25 @@ class FinancialController extends Controller
         abort_if($transaction->user_id !== auth()->id(), 403);
 
         $validated = $request->validate([
-            'title'         => 'required|string|max:255',
-            'amount'        => 'required|numeric|min:0.01',
-            'type'          => 'required|in:income,expense',
-            'note'          => 'nullable|string|max:1000',
-            'transacted_at' => 'required|date',
+            'title'                     => 'required|string|max:255',
+            'amount'                    => 'required|numeric|min:0.01',
+            'type'                      => 'required|in:income,expense',
+            'note'                      => 'nullable|string|max:1000',
+            'transacted_at'             => 'required|date',
+            'assign_to_previous_month'  => 'sometimes|boolean',
         ]);
 
-        $transaction->update($validated);
+        $date = Carbon::parse($validated['transacted_at']);
+        $assignToPrevious = $request->boolean('assign_to_previous_month');
+
+        $transaction->update([
+            'title'           => $validated['title'],
+            'amount'          => $validated['amount'],
+            'type'            => $validated['type'],
+            'note'            => $validated['note'] ?? null,
+            'transacted_at'   => $validated['transacted_at'],
+            'reporting_month' => $this->periods->resolveReportingMonth($date, $assignToPrevious),
+        ]);
 
         return back()->with('status', __('Transaction updated.'));
     }
