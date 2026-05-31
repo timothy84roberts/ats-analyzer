@@ -22,6 +22,7 @@ class UpdatePlatformRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('platforms', 'slug')->ignore($platform->id)],
+            'url' => ['nullable', 'string', 'max:255', 'url'],
             'is_active' => ['nullable', 'in:0,1,true,false'],
         ];
     }
@@ -30,6 +31,14 @@ class UpdatePlatformRequest extends FormRequest
     {
         if ($this->has('slug')) {
             $this->merge(['slug' => \Illuminate\Support\Str::slug($this->input('slug'))]);
+        }
+
+        if ($this->filled('url')) {
+            $url = trim($this->input('url'));
+            if (! preg_match('#^https?://#i', $url)) {
+                $url = 'https://' . $url;
+            }
+            $this->merge(['url' => $url]);
         }
     }
 }

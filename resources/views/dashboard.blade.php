@@ -8,7 +8,27 @@
         </div>
     </x-slot>
 
-    <div class="admin-card admin-card--pad">
+    @include('job-applications._pickers')
+
+    @php
+        $countryFilterOptions = collect([['id' => '', 'name' => __('All'), 'flag' => null]])
+            ->merge($filterCountries->map(fn ($c) => [
+                'id' => (string) $c->id,
+                'name' => $c->name,
+                'flag' => $c->code ? 'https://flagcdn.com/24x18/'.strtolower($c->code).'.png' : null,
+            ]))->values();
+        $platformFilterOptions = collect([['id' => '', 'name' => __('All'), 'logo' => null, 'initial' => null]])
+            ->merge($filterPlatforms->map(fn ($p) => [
+                'id' => (string) $p->id,
+                'name' => $p->name,
+                'logo' => $p->logo_url,
+                'initial' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($p->name, 0, 1)),
+            ]))->values();
+        $selectedCountryFilter = (string) request('country_id', '');
+        $selectedPlatformFilter = (string) request('platform_id', '');
+    @endphp
+
+    <div class="admin-card admin-card--pad" style="overflow: visible;">
         <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ useDate: @js((bool) ($useDate ?? false)) }">
             <div class="admin-field">
                 <span class="admin-label">{{ __('Period') }}</span>
@@ -18,32 +38,90 @@
                     @endforeach
                 </select>
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($countryFilterOptions), @js($selectedCountryFilter))">
                 <span class="admin-label">{{ __('Country') }}</span>
-                <select name="country_id" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($filterCountries as $c)
-                        <option value="{{ $c->id }}" @selected((string) request('country_id') === (string) $c->id)>{{ $c->name }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="country_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <template x-if="selected() && selected().flag">
+                                <img :src="selected().flag" :alt="selected().name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                            </template>
+                            <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="country in options" :key="country.id">
+                            <button type="button" @click="pick(country.id)" :style="selectedId === country.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <template x-if="country.flag">
+                                    <img :src="country.flag" :alt="country.name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                                </template>
+                                <span x-text="country.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($platformFilterOptions), @js($selectedPlatformFilter))">
                 <span class="admin-label">{{ __('Platform') }}</span>
-                <select name="platform_id" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($filterPlatforms as $p)
-                        <option value="{{ $p->id }}" @selected((string) request('platform_id') === (string) $p->id)>{{ $p->name }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="platform_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <template x-if="selected() && selected().logo">
+                                <img :src="selected().logo" :alt="selected().name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                            </template>
+                            <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="platform in options" :key="platform.id">
+                            <button type="button" @click="pick(platform.id)" :style="selectedId === platform.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <template x-if="platform.logo">
+                                    <img :src="platform.logo" :alt="platform.name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                                </template>
+                                <template x-if="!platform.logo && platform.initial">
+                                    <span x-text="platform.initial" style="display:inline-flex; width:20px; height:20px; border-radius:4px; flex-shrink:0; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--admin-accent); background:var(--admin-accent-muted);"></span>
+                                </template>
+                                <span x-text="platform.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 180px;" x-data="{ open: false, val: @js((string) request('outcome_status', '')) }">
                 <span class="admin-label">{{ __('Outcome') }}</span>
-                <select name="outcome_status" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($outcomeOptions as $o)
-                        <option value="{{ $o }}" @selected(request('outcome_status') === $o)>{{ ucfirst($o) }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="outcome_status" :value="val">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <span style="display:none;" :style="val === '' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                <span>{{ __('All') }}</span>
+                            </span>
+                            @foreach ($outcomeOptions as $o)
+                                <span style="display:none;" :style="val === '{{ $o }}' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                    <x-outcome-icon :status="$o" :size="16" />
+                                    <span>{{ ucfirst($o) }}</span>
+                                </span>
+                            @endforeach
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:240px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <button type="button" @click="val = ''; open = false" :style="val === '' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                            <span style="width:16px;flex-shrink:0;"></span>
+                            <span>{{ __('All') }}</span>
+                        </button>
+                        @foreach ($outcomeOptions as $o)
+                            <button type="button" @click="val = '{{ $o }}'; open = false" :style="val === '{{ $o }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <x-outcome-icon :status="$o" :size="16" />
+                                <span>{{ ucfirst($o) }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
             </div>
             <div class="admin-field">
                 <span class="admin-label">{{ __('Date option') }}</span>
@@ -88,15 +166,7 @@
                     <span class="admin-stat__pct">{{ $outcomePercent }}%</span>
                 </div>
                 <div class="admin-stat__icon admin-stat__icon--{{ $meta['icon'] }}">
-                    @if ($o === \App\Models\JobApplication::OUTCOME_WAITING)
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    @elseif($o === \App\Models\JobApplication::OUTCOME_REJECTED)
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    @elseif($o === \App\Models\JobApplication::OUTCOME_INTERVIEW)
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-                    @else
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    @endif
+                    <x-outcome-icon :status="$o" :size="20" />
                 </div>
             </div>
         @endforeach

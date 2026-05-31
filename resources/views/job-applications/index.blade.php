@@ -15,38 +15,116 @@
         <div class="admin-alert admin-alert--success">{{ session('status') }}</div>
     @endif
 
-    <div class="admin-card admin-card--pad">
+    @include('job-applications._pickers')
+
+    @php
+        $countryFilterOptions = collect([['id' => '', 'name' => __('All'), 'flag' => null]])
+            ->merge($countries->map(fn ($c) => [
+                'id' => (string) $c->id,
+                'name' => $c->name,
+                'flag' => $c->code ? 'https://flagcdn.com/24x18/'.strtolower($c->code).'.png' : null,
+            ]))->values();
+        $platformFilterOptions = collect([['id' => '', 'name' => __('All'), 'logo' => null, 'initial' => null]])
+            ->merge($platforms->map(fn ($p) => [
+                'id' => (string) $p->id,
+                'name' => $p->name,
+                'logo' => $p->logo_url,
+                'initial' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($p->name, 0, 1)),
+            ]))->values();
+        $selectedCountryFilter = (string) request('country_id', '');
+        $selectedPlatformFilter = (string) request('platform_id', '');
+    @endphp
+
+    <div class="admin-card admin-card--pad" style="overflow: visible;">
         <form method="get" class="admin-toolbar">
             <div class="admin-field admin-field--grow">
                 <span class="admin-label">{{ __('Search title') }}</span>
                 <input type="text" name="q" value="{{ request('q') }}" class="admin-input" placeholder="{{ __('Job title…') }}">
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($countryFilterOptions), @js($selectedCountryFilter))">
                 <span class="admin-label">{{ __('Country') }}</span>
-                <select name="country_id" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($countries as $c)
-                        <option value="{{ $c->id }}" @selected((string) request('country_id') === (string) $c->id)>{{ $c->name }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="country_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <template x-if="selected() && selected().flag">
+                                <img :src="selected().flag" :alt="selected().name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                            </template>
+                            <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="country in options" :key="country.id">
+                            <button type="button" @click="pick(country.id)" :style="selectedId === country.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <template x-if="country.flag">
+                                    <img :src="country.flag" :alt="country.name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
+                                </template>
+                                <span x-text="country.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($platformFilterOptions), @js($selectedPlatformFilter))">
                 <span class="admin-label">{{ __('Platform') }}</span>
-                <select name="platform_id" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($platforms as $p)
-                        <option value="{{ $p->id }}" @selected((string) request('platform_id') === (string) $p->id)>{{ $p->name }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="platform_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <template x-if="selected() && selected().logo">
+                                <img :src="selected().logo" :alt="selected().name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                            </template>
+                            <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="platform in options" :key="platform.id">
+                            <button type="button" @click="pick(platform.id)" :style="selectedId === platform.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <template x-if="platform.logo">
+                                    <img :src="platform.logo" :alt="platform.name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                                </template>
+                                <template x-if="!platform.logo && platform.initial">
+                                    <span x-text="platform.initial" style="display:inline-flex; width:20px; height:20px; border-radius:4px; flex-shrink:0; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--admin-accent); background:var(--admin-accent-muted);"></span>
+                                </template>
+                                <span x-text="platform.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
-            <div class="admin-field">
+            <div class="admin-field" style="min-width: 180px;" x-data="{ open: false, val: @js((string) request('outcome_status', '')) }">
                 <span class="admin-label">{{ __('Outcome') }}</span>
-                <select name="outcome_status" class="admin-select">
-                    <option value="">{{ __('All') }}</option>
-                    @foreach ($outcomeStatuses as $o)
-                        <option value="{{ $o }}" @selected(request('outcome_status') === $o)>{{ ucfirst($o) }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="outcome_status" :value="val">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            <span style="display:none;" :style="val === '' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                <span>{{ __('All') }}</span>
+                            </span>
+                            @foreach ($outcomeStatuses as $o)
+                                <span style="display:none;" :style="val === '{{ $o }}' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                    <x-outcome-icon :status="$o" :size="16" />
+                                    <span>{{ ucfirst($o) }}</span>
+                                </span>
+                            @endforeach
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:240px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <button type="button" @click="val = ''; open = false" :style="val === '' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                            <span style="width:16px;flex-shrink:0;"></span>
+                            <span>{{ __('All') }}</span>
+                        </button>
+                        @foreach ($outcomeStatuses as $o)
+                            <button type="button" @click="val = '{{ $o }}'; open = false" :style="val === '{{ $o }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <x-outcome-icon :status="$o" :size="16" />
+                                <span>{{ ucfirst($o) }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
             </div>
             <div class="admin-field">
                 <span class="admin-label">{{ __('Applied on') }}</span>
@@ -93,15 +171,33 @@
                                     <span>{{ $app->country?->name }}</span>
                                 </span>
                             </td>
-                            <td>{{ $app->platform?->name }}</td>
+                            <td>
+                                <span style="display:inline-flex; align-items:center; gap:8px;">
+                                    @if ($app->platform?->logo_url)
+                                        <img
+                                            src="{{ $app->platform->logo_url }}"
+                                            alt="{{ $app->platform->name }} logo"
+                                            width="18"
+                                            height="18"
+                                            loading="lazy"
+                                            style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;"
+                                        >
+                                    @endif
+                                    <span>{{ $app->platform?->name }}</span>
+                                </span>
+                            </td>
                             <td>
                                 @php($stageSlug = $app->pipelineStage?->slug ?? 'unknown')
-                                <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $stageSlug }}">
+                                <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $stageSlug }}" style="display:inline-flex;align-items:center;gap:6px;">
+                                    <x-stage-icon :slug="$stageSlug" />
                                     {{ $app->pipelineStage?->label ?? '—' }}
                                 </span>
                             </td>
                             <td>
-                                <span class="admin-pill admin-pill--{{ $app->outcome_status }}">{{ ucfirst($app->outcome_status) }}</span>
+                                <span class="admin-pill admin-pill--{{ $app->outcome_status }}" style="display:inline-flex;align-items:center;gap:6px;">
+                                    <x-outcome-icon :status="$app->outcome_status" />
+                                    {{ ucfirst($app->outcome_status) }}
+                                </span>
                             </td>
                             <td>{{ $app->applied_on->format('Y-m-d') }}</td>
                             <td class="whitespace-nowrap">

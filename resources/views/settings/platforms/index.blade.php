@@ -30,7 +30,25 @@
                 <tbody>
                     @foreach ($platforms as $platform)
                         <tr>
-                            <td>{{ $platform->name }}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    @if ($platform->logo_url)
+                                        <img
+                                            src="{{ $platform->logo_url }}"
+                                            alt="{{ $platform->name }} logo"
+                                            width="24"
+                                            height="24"
+                                            loading="lazy"
+                                            style="width: 24px; height: 24px; border-radius: 6px; object-fit: contain; flex-shrink: 0; background: #fff; border: 1px solid var(--admin-border, #e5e7eb);"
+                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                        >
+                                        <span style="display: none; width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--admin-accent, #2563eb); background: var(--admin-accent-muted, rgba(37,99,235,0.12));">{{ \Illuminate\Support\Str::substr($platform->name, 0, 1) }}</span>
+                                    @else
+                                        <span style="display: inline-flex; width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--admin-accent, #2563eb); background: var(--admin-accent-muted, rgba(37,99,235,0.12));">{{ \Illuminate\Support\Str::substr($platform->name, 0, 1) }}</span>
+                                    @endif
+                                    <span>{{ $platform->name }}</span>
+                                </div>
+                            </td>
                             <td><code class="admin-code">{{ $platform->slug }}</code></td>
                             <td>
                                 <span class="admin-pill {{ $platform->is_active ? 'admin-pill--success' : 'admin-pill--waiting' }}">{{ $platform->is_active ? __('Yes') : __('No') }}</span>

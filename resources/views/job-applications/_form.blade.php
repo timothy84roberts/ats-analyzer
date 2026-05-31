@@ -10,16 +10,16 @@
         'flag' => 'https://flagcdn.com/24x18/'.strtolower($country->code).'.png',
     ])->values();
     $selectedCountryId = (string) old('country_id', $application?->country_id ?? '');
+    $platformOptions = $platforms->map(fn ($platform) => [
+        'id' => (string) $platform->id,
+        'name' => $platform->name,
+        'logo' => $platform->logo_url,
+        'initial' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($platform->name, 0, 1)),
+    ])->values();
     $selectedPlatformId = (string) old('platform_id', $application?->platform_id ?? '');
     $defaultAppliedOn = old('applied_on', $application?->applied_on?->format('Y-m-d') ?? now()->format('Y-m-d'));
 @endphp
-<div class="admin-form-stack" @if ($editing) x-data="{ outcome: @js(old('outcome_status', $application?->outcome_status ?? $defaultOutcome)) }" @endif>
-    @unless ($editing)
-        <p class="admin-muted-hint" style="margin: 0;">
-            {{ __('New applications start in Waiting at the first pipeline stage. After the company responds, use Edit to change pipeline stage, set outcome to Rejected if they declined, and enter a rejection reason.') }}
-        </p>
-    @endunless
-
+<div class="admin-form-stack" @if ($editing) x-data="{ outcome: @js(old('outcome_status', $application?->outcome_status ?? $defaultOutcome)), outcomeOpen: false, stageId: @js((string) old('pipeline_stage_id', $application?->pipeline_stage_id ?? '')), stageOpen: false }" @endif>
     <div class="admin-field">
         <label class="admin-label" for="title">{{ __('Job title') }}</label>
         <input id="title" class="admin-input" type="text" name="title" value="{{ old('title', $application?->title ?? '') }}" required @if(! $editing) autofocus @endif>
@@ -84,33 +84,12 @@
         <link href="{{ asset('css/summernote-admin.css') }}" rel="stylesheet">
     @endPushOnce
 
+    @include('job-applications._pickers')
+
     @pushOnce('scripts')
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
         <script>
-            function countryPicker(options, initialId) {
-                var list = Array.isArray(options) ? options : [];
-                var normalizedInitialId = initialId == null ? '' : String(initialId);
-                var selected = list.some(function (item) {
-                    return item.id === normalizedInitialId;
-                }) ? normalizedInitialId : '';
-
-                return {
-                    open: false,
-                    options: list,
-                    selectedId: selected,
-                    selected: function () {
-                        return this.options.find(function (item) {
-                            return item.id === this.selectedId;
-                        }.bind(this)) || null;
-                    },
-                    pick: function (id) {
-                        this.selectedId = id;
-                        this.open = false;
-                    },
-                };
-            }
-
             document.addEventListener('DOMContentLoaded', function () {
                 var ta = document.getElementById('description');
                 var wrap = document.getElementById('description-editor-wrap');
@@ -150,21 +129,55 @@
     @if ($editing)
         <div class="admin-field-grid-2">
             <div class="admin-field">
-                <label class="admin-label" for="pipeline_stage_id">{{ __('Pipeline stage') }}</label>
-                <select id="pipeline_stage_id" name="pipeline_stage_id" class="admin-select admin-select--emphasis" required>
-                    @foreach ($pipelineStages as $stage)
-                        <option value="{{ $stage->id }}" @selected((string) old('pipeline_stage_id', $application?->pipeline_stage_id ?? '') === (string) $stage->id)>{{ $stage->label }}</option>
-                    @endforeach
-                </select>
+                <label class="admin-label">{{ __('Pipeline stage') }}</label>
+                <input type="hidden" name="pipeline_stage_id" :value="stageId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select admin-select--emphasis" @click="stageOpen = !stageOpen" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            @foreach ($pipelineStages as $stage)
+                                <span style="display:none;" :style="stageId === '{{ $stage->id }}' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                    <x-stage-icon :slug="$stage->slug" :size="16" />
+                                    <span>{{ $stage->label }}</span>
+                                </span>
+                            @endforeach
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="stageOpen" x-cloak @click.outside="stageOpen = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:240px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        @foreach ($pipelineStages as $stage)
+                            <button type="button" @click="stageId = '{{ $stage->id }}'; stageOpen = false" :style="stageId === '{{ $stage->id }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <x-stage-icon :slug="$stage->slug" :size="16" />
+                                <span>{{ $stage->label }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
                 <x-input-error :messages="$errors->get('pipeline_stage_id')" class="mt-2" />
             </div>
             <div class="admin-field">
-                <label class="admin-label" for="outcome_status">{{ __('Outcome status') }}</label>
-                <select id="outcome_status" name="outcome_status" x-model="outcome" class="admin-select admin-select--emphasis" required>
-                    @foreach ($outcomeOptions as $value => $label)
-                        <option value="{{ $value }}" @selected(old('outcome_status', $application?->outcome_status ?? $defaultOutcome) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <label class="admin-label">{{ __('Outcome status') }}</label>
+                <input type="hidden" name="outcome_status" :value="outcome">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select admin-select--emphasis" @click="outcomeOpen = !outcomeOpen" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span style="display:flex; align-items:center; gap:8px; min-width:0;">
+                            @foreach ($outcomeOptions as $value => $label)
+                                <span style="display:none;" :style="outcome === '{{ $value }}' ? 'display:inline-flex;align-items:center;gap:8px;' : 'display:none'">
+                                    <x-outcome-icon :status="$value" :size="16" />
+                                    <span>{{ $label }}</span>
+                                </span>
+                            @endforeach
+                        </span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="outcomeOpen" x-cloak @click.outside="outcomeOpen = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:240px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        @foreach ($outcomeOptions as $value => $label)
+                            <button type="button" @click="outcome = '{{ $value }}'; outcomeOpen = false" :style="outcome === '{{ $value }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <x-outcome-icon :status="$value" :size="16" />
+                                <span>{{ $label }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
                 <x-input-error :messages="$errors->get('outcome_status')" class="mt-2" />
             </div>
         </div>
@@ -217,14 +230,53 @@
             </div>
             <x-input-error :messages="$errors->get('country_id')" class="mt-2" />
         </div>
-        <div class="admin-field">
+        <div class="admin-field" x-data="platformPicker(@js($platformOptions), @js($selectedPlatformId))">
             <label class="admin-label" for="platform_id">{{ __('Platform') }}</label>
-            <select id="platform_id" name="platform_id" class="admin-select" required>
-                <option value="" disabled @selected($selectedPlatformId === '')>{{ __('Select platform') }}</option>
-                @foreach ($platforms as $platform)
-                    <option value="{{ $platform->id }}" @selected($selectedPlatformId === (string) $platform->id)>{{ $platform->name }}</option>
-                @endforeach
-            </select>
+            <input id="platform_id" type="hidden" name="platform_id" x-model="selectedId" required>
+            <div style="position: relative;">
+                <button
+                    type="button"
+                    class="admin-select"
+                    @click="open = !open"
+                    style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;"
+                >
+                    <span style="display:flex; align-items:center; gap:10px; min-width:0;">
+                        <template x-if="selected() && selected().logo">
+                            <img :src="selected().logo" :alt="selected().name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                        </template>
+                        <template x-if="selected() && !selected().logo">
+                            <span x-text="selected().initial" style="display:inline-flex; width:20px; height:20px; border-radius:4px; flex-shrink:0; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--admin-accent); background:var(--admin-accent-muted);"></span>
+                        </template>
+                        <span x-show="selected()" x-text="selected() ? selected().name : ''" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        <span x-show="!selected()" style="color: var(--admin-text-muted);">{{ __('Select platform') }}</span>
+                    </span>
+                    <span style="color: var(--admin-text-muted);">▾</span>
+                </button>
+                <div
+                    x-show="open"
+                    x-cloak
+                    @click.outside="open = false"
+                    style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:180px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);"
+                >
+                    <template x-for="platform in options" :key="platform.id">
+                        <button
+                            type="button"
+                            @click="pick(platform.id)"
+                            :style="selectedId === platform.id
+                                ? 'display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;'
+                                : 'display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'"
+                        >
+                            <template x-if="platform.logo">
+                                <img :src="platform.logo" :alt="platform.name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
+                            </template>
+                            <template x-if="!platform.logo">
+                                <span x-text="platform.initial" style="display:inline-flex; width:20px; height:20px; border-radius:4px; flex-shrink:0; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--admin-accent); background:var(--admin-accent-muted);"></span>
+                            </template>
+                            <span x-text="platform.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
             <x-input-error :messages="$errors->get('platform_id')" class="mt-2" />
         </div>
     </div>

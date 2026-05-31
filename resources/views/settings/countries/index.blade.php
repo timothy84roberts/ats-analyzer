@@ -34,7 +34,21 @@
                 <tbody>
                     @foreach ($countries as $country)
                         <tr>
-                            <td>{{ $country->name }}</td>
+                            <td>
+                                <span style="display:inline-flex; align-items:center; gap:10px;">
+                                    @if ($country->code)
+                                        <img
+                                            src="{{ 'https://flagcdn.com/24x18/'.strtolower($country->code).'.png' }}"
+                                            alt="{{ $country->name }} flag"
+                                            width="24"
+                                            height="18"
+                                            loading="lazy"
+                                            style="border-radius:2px; object-fit:cover; flex-shrink:0;"
+                                        >
+                                    @endif
+                                    <span>{{ $country->name }}</span>
+                                </span>
+                            </td>
                             <td>{{ $country->code }}</td>
                             <td>
                                 <span class="admin-pill {{ $country->is_active ? 'admin-pill--success' : 'admin-pill--waiting' }}">{{ $country->is_active ? __('Yes') : __('No') }}</span>

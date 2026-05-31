@@ -14,7 +14,7 @@
         <dl class="admin-dl">
             <div class="admin-dl__row">
                 <dt class="admin-dl__dt">{{ __('Outcome') }}</dt>
-                <dd class="admin-dl__dd"><span class="admin-pill admin-pill--{{ $application->outcome_status }}">{{ ucfirst($application->outcome_status) }}</span></dd>
+                <dd class="admin-dl__dd"><span class="admin-pill admin-pill--{{ $application->outcome_status }}" style="display:inline-flex;align-items:center;gap:6px;"><x-outcome-icon :status="$application->outcome_status" />{{ ucfirst($application->outcome_status) }}</span></dd>
             </div>
             @if ($application->isRejected() && $application->rejection_reason)
                 <div class="admin-dl__row">
@@ -26,7 +26,8 @@
                 <dt class="admin-dl__dt">{{ __('Pipeline stage') }}</dt>
                 <dd class="admin-dl__dd">
                     @php($currentStageSlug = $application->pipelineStage?->slug ?? 'unknown')
-                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $currentStageSlug }}">
+                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $currentStageSlug }}" style="display:inline-flex;align-items:center;gap:6px;">
+                        <x-stage-icon :slug="$currentStageSlug" />
                         {{ $application->pipelineStage?->label ?? '—' }}
                     </span>
                 </dd>
@@ -43,7 +44,18 @@
                             style="border-radius:2px; object-fit:cover; flex-shrink:0;"
                         >
                     @endif
-                    <span>{{ $application->country?->name }} / {{ $application->platform?->name }}</span>
+                    <span>{{ $application->country?->name }} / </span>
+                    @if ($application->platform?->logo_url)
+                        <img
+                            src="{{ $application->platform->logo_url }}"
+                            alt="{{ $application->platform->name }} logo"
+                            width="18"
+                            height="18"
+                            loading="lazy"
+                            style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;"
+                        >
+                    @endif
+                    <span>{{ $application->platform?->name }}</span>
                 </dd>
             </div>
             <div class="admin-dl__row">
@@ -279,7 +291,8 @@
             @forelse ($application->stageHistories as $h)
                 <li class="admin-activity__item">
                     @php($historyStageSlug = $h->pipelineStage?->slug ?? 'unknown')
-                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $historyStageSlug }}">
+                    <span class="admin-pill admin-pill--stage admin-pill--stage-{{ $historyStageSlug }}" style="display:inline-flex;align-items:center;gap:6px;">
+                        <x-stage-icon :slug="$historyStageSlug" />
                         {{ $h->pipelineStage?->label ?? '—' }}
                     </span>
                     <span class="admin-activity__meta">{{ $h->entered_at->format('Y-m-d H:i') }}</span>

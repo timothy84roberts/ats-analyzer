@@ -19,6 +19,12 @@
                         <input id="slug" name="slug" class="admin-input" type="text" value="{{ old('slug', $platform->slug) }}" required>
                         <x-input-error :messages="$errors->get('slug')" class="mt-2" />
                     </div>
+                    <div class="admin-field">
+                        <label class="admin-label" for="url">{{ __('Website URL') }}</label>
+                        <input id="url" name="url" class="admin-input" type="url" value="{{ old('url', $platform->url) }}" placeholder="https://www.linkedin.com">
+                        <span style="font-size: 0.75rem; color: var(--admin-text-muted);">{{ __('Used to display the platform logo.') }}</span>
+                        <x-input-error :messages="$errors->get('url')" class="mt-2" />
+                    </div>
                     <div class="admin-check">
                         <input type="hidden" name="is_active" value="0">
                         <input id="is_active" type="checkbox" name="is_active" value="1" @checked(old('is_active', $platform->is_active))>
