@@ -144,12 +144,12 @@
                     <tr>
                         <th>{{ __('Title') }}</th>
                         <th>{{ __('Company') }}</th>
-                        <th>{{ __('Country') }}</th>
+                        <th style="width: 160px;">{{ __('Country') }}</th>
                         <th>{{ __('Platform') }}</th>
                         <th style="width: 170px;">{{ __('Stage') }}</th>
                         <th>{{ __('Outcome') }}</th>
                         <th style="width: 120px;">{{ __('Applied') }}</th>
-                        <th style="width: 300px;">{{ __('Actions') }}</th>
+                        <th style="width: 250px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>

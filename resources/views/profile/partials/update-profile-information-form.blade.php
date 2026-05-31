@@ -28,7 +28,7 @@
                     <p>{{ __('Your email address is unverified.') }}</p>
                     <button type="submit" form="send-verification" class="admin-link">{{ __('Click here to re-send the verification email.') }}</button>
                     @if (session('status') === 'verification-link-sent')
-                        <p class="admin-alert admin-alert--success" style="margin-top: 12px;">{{ __('A new verification link has been sent to your email address.') }}</p>
+                        <p class="admin-alert admin-alert--success admin-mt-10">{{ __('A new verification link has been sent to your email address.') }}</p>
                     @endif
                 </div>
             @endif
