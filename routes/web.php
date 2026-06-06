@@ -39,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings', SettingsController::class)->name('settings.index');
 
     Route::resource('settings/countries', CountryController::class)->only(['index', 'create', 'store', 'destroy']);
+    Route::post('settings/platforms/reorder', [PlatformController::class, 'reorder'])->name('platforms.reorder');
     Route::resource('settings/platforms', PlatformController::class)->except(['show']);
 
     Route::get('/financial', [FinancialController::class, 'index'])->name('financial.index');
