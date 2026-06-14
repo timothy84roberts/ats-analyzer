@@ -48,7 +48,7 @@
                         <button type="button" class="cal-daynum" @click="goToDay(day.date)" x-text="day.date.getDate()"></button>
                         <div class="cal-cell-events">
                             <template x-for="ev in day.events.slice(0, 3)" :key="ev.id">
-                                <button type="button" class="cal-chip" :class="{ 'is-past': isPast(ev.startDate) }" @click="openEvent(ev)">
+                                <button type="button" class="cal-chip" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" @click="openEvent(ev)">
                                     <span class="cal-chip__dot"></span>
                                     <span class="cal-chip__time" x-text="fmtTime(ev.startDate)"></span>
                                     <span class="cal-chip__title" x-text="ev.title"></span>
@@ -72,10 +72,11 @@
                     </button>
                     <div class="cal-week-body">
                         <template x-for="ev in day.events" :key="ev.id">
-                            <button type="button" class="cal-event-card" :class="{ 'is-past': isPast(ev.startDate) }" @click="openEvent(ev)">
+                            <button type="button" class="cal-event-card" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" @click="openEvent(ev)">
                                 <span class="cal-event-card__time">
                                     <span x-text="fmtTime(ev.startDate)"></span>
-                                    <span class="cal-badge-expired" x-show="isPast(ev.startDate)">{{ __('Expired') }}</span>
+                                    <span class="cal-badge cal-badge--danger" x-show="isPast(ev.startDate)">{{ __('Expired') }}</span>
+                                    <span class="cal-badge cal-badge--warning cal-badge--lg" x-show="isSoon(ev.startDate)">{{ __('Soon') }}</span>
                                 </span>
                                 <span class="cal-event-card__title" x-text="ev.title"></span>
                                 <span class="cal-event-card__sub" x-show="ev.application_title" x-text="ev.company_name || ev.application_title"></span>
@@ -101,7 +102,7 @@
 
                     <div class="cal-day-col">
                         <template x-for="p in dayLayout" :key="p.ev.id">
-                            <button type="button" class="cal-day-event" :class="{ 'is-past': isPast(p.ev.startDate) }" :style="p.style" @click="openEvent(p.ev)">
+                            <button type="button" class="cal-day-event" :class="{ 'is-past': isPast(p.ev.startDate), 'is-soon': isSoon(p.ev.startDate) }" :style="p.style" @click="openEvent(p.ev)">
                                 <span class="cal-day-event__time" x-text="fmtTime(p.ev.startDate)"></span>
                                 <span class="cal-day-event__title" x-text="p.ev.title"></span>
                             </button>
@@ -140,7 +141,8 @@
                     <div class="cal-detail-row">
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                         <span x-text="selected ? fmtFull(selected.startDate) : ''"></span>
-                        <span class="cal-badge-expired" x-show="selected && isPast(selected.startDate)">{{ __('Expired') }}</span>
+                        <span class="cal-badge cal-badge--danger" x-show="selected && isPast(selected.startDate)">{{ __('Expired') }}</span>
+                        <span class="cal-badge cal-badge--warning cal-badge--lg" x-show="selected && isSoon(selected.startDate)">{{ __('Soon') }}</span>
                     </div>
                     <template x-if="selected && (selected.application_title || selected.company_name)">
                         <div class="cal-detail-row">
@@ -211,7 +213,7 @@
             .cal-week-body { display:flex; flex-direction:column; gap:6px; padding:8px 6px; min-height:240px; }
             .cal-event-card { display:flex; flex-direction:column; gap:1px; text-align:left; border:none; border-left:3px solid var(--admin-accent); background:var(--admin-accent-muted); border-radius:6px; padding:6px 8px; cursor:pointer; }
             .cal-event-card:hover { filter:brightness(0.97); }
-            .cal-event-card__time { font-size:0.72rem; font-weight:700; color:var(--admin-accent-text); }
+            .cal-event-card__time { display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-size:0.72rem; font-weight:700; color:var(--admin-accent-text); }
             .cal-event-card__title { font-size:0.8rem; font-weight:600; color:var(--admin-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
             .cal-event-card__sub { font-size:0.7rem; color:var(--admin-text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
             .cal-empty-mini { font-size:0.72rem; color:var(--admin-text-muted); text-align:center; padding-top:12px; opacity:0.7; }
@@ -236,21 +238,41 @@
             .cal-detail-row svg { color:var(--admin-text-muted); flex-shrink:0; }
             .cal-detail-desc { white-space:pre-line; font-size:0.85rem; color:var(--admin-text); background:var(--admin-surface-2); border:1px solid var(--admin-border); border-radius:8px; padding:10px 12px; margin-top:4px; max-height:40vh; overflow-y:auto; }
 
-            /* Expired (past) calls */
-            .cal-badge-expired { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; background:rgba(107,114,128,0.16); color:#6b7280; vertical-align:middle; }
+            /* Call status badges */
+            .cal-badge { display:inline-block; padding:1px 6px; border-radius:999px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; vertical-align:middle; }
+            .cal-badge--danger { background:rgba(239,68,68,0.14); color:#dc2626; }
+            .cal-badge--warning { background:rgba(245,158,11,0.18); color:#d97706; }
+            .cal-badge--lg { padding:3px 10px; font-size:0.72rem; letter-spacing:0.04em; }
+            html[data-theme="dark"] .cal-badge--danger { color:#f87171; }
+            html[data-theme="dark"] .cal-badge--warning { color:#fbbf24; }
 
-            .cal-chip.is-past { background:var(--admin-surface-2); }
-            .cal-chip.is-past .cal-chip__dot { background:#9ca3af; }
-            .cal-chip.is-past .cal-chip__time { color:var(--admin-text-muted); }
+            /* Expired (past) calls */
+            .cal-chip.is-past { background:rgba(239,68,68,0.12); }
+            .cal-chip.is-past .cal-chip__dot { background:#dc2626; }
+            .cal-chip.is-past .cal-chip__time { color:#dc2626; }
             .cal-chip.is-past .cal-chip__title { color:var(--admin-text-muted); text-decoration:line-through; }
 
-            .cal-event-card.is-past { border-left-color:#9ca3af; background:var(--admin-surface-2); }
-            .cal-event-card.is-past .cal-event-card__time { color:var(--admin-text-muted); }
+            /* Soon (within 12 hours) calls */
+            .cal-chip.is-soon { background:rgba(245,158,11,0.14); padding:5px 8px; font-size:0.78rem; }
+            .cal-chip.is-soon .cal-chip__dot { width:8px; height:8px; background:#d97706; }
+            .cal-chip.is-soon .cal-chip__time { color:#d97706; font-size:0.76rem; }
+            .cal-chip.is-soon .cal-chip__title { font-weight:700; }
+
+            .cal-event-card.is-past { border-left-color:#dc2626; background:rgba(239,68,68,0.1); }
+            .cal-event-card.is-past .cal-event-card__time { color:#dc2626; }
             .cal-event-card.is-past .cal-event-card__title { color:var(--admin-text-muted); text-decoration:line-through; }
 
-            .cal-day-event.is-past { border-left-color:#9ca3af; background:var(--admin-surface-2); }
-            .cal-day-event.is-past .cal-day-event__time { color:var(--admin-text-muted); }
+            .cal-event-card.is-soon { border-left-color:#d97706; background:rgba(245,158,11,0.12); padding:9px 10px; }
+            .cal-event-card.is-soon .cal-event-card__time { color:#d97706; font-size:0.78rem; }
+            .cal-event-card.is-soon .cal-event-card__title { font-size:0.86rem; font-weight:700; }
+
+            .cal-day-event.is-past { border-left-color:#dc2626; background:rgba(239,68,68,0.1); }
+            .cal-day-event.is-past .cal-day-event__time { color:#dc2626; }
             .cal-day-event.is-past .cal-day-event__title { color:var(--admin-text-muted); text-decoration:line-through; }
+
+            .cal-day-event.is-soon { border-left-color:#d97706; background:rgba(245,158,11,0.12); padding:5px 9px; }
+            .cal-day-event.is-soon .cal-day-event__time { color:#d97706; font-size:0.74rem; }
+            .cal-day-event.is-soon .cal-day-event__title { font-size:0.84rem; font-weight:700; }
 
             @media (max-width:640px) {
                 .cal-cell { min-height:78px; }
@@ -287,6 +309,11 @@
                     sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); },
                     isToday(d) { return this.sameDay(d, new Date()); },
                     isPast(d) { return d.getTime() < Date.now(); },
+                    isSoon(d) {
+                        const now = Date.now();
+                        const t = d.getTime();
+                        return t >= now && t <= now + 12 * 3600000;
+                    },
 
                     fmtTime(d) { return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); },
                     fmtHour(h) {
@@ -406,7 +433,9 @@
                             group.forEach(ev => {
                                 const minutes = ev.startDate.getHours() * 60 + ev.startDate.getMinutes();
                                 const top = (minutes / 60) * this.hourHeight;
-                                const height = Math.max(this.hourHeight - 3, 22);
+                                const height = this.isSoon(ev.startDate)
+                                    ? Math.max(this.hourHeight + 4, 40)
+                                    : Math.max(this.hourHeight - 3, 22);
                                 const widthPct = 100 / cols;
                                 const leftPct = ev._lane * widthPct;
                                 out.push({
