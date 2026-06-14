@@ -10,6 +10,7 @@ use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\JobApplicationNoteController;
 use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('applications/{application}/calls/{call}', [JobApplicationCallController::class, 'destroy'])
         ->name('applications.calls.destroy');
     Route::resource('applications', JobApplicationController::class);
+
+    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
     Route::get('/settings', SettingsController::class)->name('settings.index');
 

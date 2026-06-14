@@ -26,17 +26,34 @@
             ]))->values();
         $selectedCountryFilter = (string) request('country_id', '');
         $selectedPlatformFilter = (string) request('platform_id', '');
+        $periodOffset = (int) ($periodOffset ?? 0);
+        $navQuery = array_filter([
+            'period' => $period ?? 'week',
+            'country_id' => request('country_id'),
+            'platform_id' => request('platform_id'),
+            'outcome_status' => request('outcome_status'),
+        ], fn ($value) => $value !== null && $value !== '');
+        $prevPeriodUrl = route('dashboard', array_merge($navQuery, ['offset' => $periodOffset - 1]));
+        $nextPeriodUrl = route('dashboard', array_merge($navQuery, ['offset' => $periodOffset + 1]));
     @endphp
 
     <div class="admin-card admin-card--pad" style="overflow: visible;">
-        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ useDate: @js((bool) ($useDate ?? false)) }">
+        <form method="get" action="{{ route('dashboard') }}" class="admin-toolbar" x-data="{ period: @js($period ?? 'week') }">
             <div class="admin-field">
                 <span class="admin-label">{{ __('Period') }}</span>
-                <select name="period" class="admin-select">
-                    @foreach (['day' => __('By day'), 'week' => __('By week'), 'month' => __('By month'), 'year' => __('By year')] as $val => $label)
-                        <option value="{{ $val }}" @selected(($period ?? 'day') === $val)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <a href="{{ $prevPeriodUrl }}" class="dash-period-nav" aria-label="{{ __('Previous') }}">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+                    </a>
+                    <select name="period" class="admin-select" x-model="period" style="flex:1; min-width:120px;">
+                        @foreach (['week' => __('By week'), 'month' => __('By month'), 'year' => __('By year')] as $val => $label)
+                            <option value="{{ $val }}" @selected(($period ?? 'week') === $val)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <a href="{{ $nextPeriodUrl }}" class="dash-period-nav" aria-label="{{ __('Next') }}">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                    </a>
+                </div>
             </div>
             <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($countryFilterOptions), @js($selectedCountryFilter))">
                 <span class="admin-label">{{ __('Country') }}</span>
@@ -123,22 +140,6 @@
                     </div>
                 </div>
             </div>
-            <div class="admin-field">
-                <span class="admin-label">{{ __('Date option') }}</span>
-                <input type="hidden" name="use_date" value="0" :disabled="useDate">
-                <label class="admin-check">
-                    <input type="checkbox" name="use_date" value="1" x-model="useDate">
-                    <span>{{ __('Use date range') }}</span>
-                </label>
-            </div>
-            <div class="admin-field" x-show="useDate" x-cloak>
-                <span class="admin-label">{{ __('From') }}</span>
-                <input type="date" name="from" value="{{ $from ?? '' }}" class="admin-input" :disabled="!useDate">
-            </div>
-            <div class="admin-field" x-show="useDate" x-cloak>
-                <span class="admin-label">{{ __('To') }}</span>
-                <input type="date" name="to" value="{{ $to ?? '' }}" class="admin-input" :disabled="!useDate">
-            </div>
             <div class="admin-field" style="align-self: flex-end;">
                 <span class="admin-label" style="opacity:0;">&nbsp;</span>
                 <button type="submit" class="admin-btn admin-btn--primary">{{ __('Apply') }}</button>
@@ -200,6 +201,28 @@
             <canvas id="chartFunnel" height="100"></canvas>
         </div>
     </div>
+
+    @push('styles')
+        <style>
+            .dash-period-nav {
+                width: 34px;
+                height: 34px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--admin-border);
+                background: var(--admin-surface);
+                color: var(--admin-text);
+                border-radius: var(--admin-radius-sm);
+                text-decoration: none;
+                flex-shrink: 0;
+                transition: background .15s;
+            }
+            .dash-period-nav:hover {
+                background: var(--admin-surface-2);
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

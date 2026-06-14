@@ -13,15 +13,15 @@ class DashboardService
      */
     public function build(User $user, array $input): array
     {
-        $period = in_array($input['period'] ?? '', ['day', 'week', 'month', 'year'], true)
+        $period = in_array($input['period'] ?? '', ['week', 'month', 'year'], true)
             ? $input['period']
-            : 'day';
-        $useDate = $this->resolveUseDate($input);
+            : 'week';
+        $offset = (int) ($input['offset'] ?? 0);
 
-        [$from, $to] = $this->resolveRange($period, $input['from'] ?? null, $input['to'] ?? null);
+        [$from, $to, $periodLabel] = $this->resolveRange($period, $offset);
 
         $base = JobApplication::query()->where('user_id', $user->id);
-        if ($useDate && $from && $to) {
+        if ($from && $to) {
             $base->whereBetween('applied_on', [$from, $to]);
         }
 
@@ -35,14 +35,15 @@ class DashboardService
             $base->where('outcome_status', $input['outcome_status']);
         }
 
-        $timeSeries = $this->timeSeries(clone $base, $period);
+        $timeSeries = $this->timeSeries(clone $base, $period, $from, $to);
         $statusByCountry = $this->statusPivot(clone $base, 'countries', 'country_id', 'countries.name');
         $statusByPlatform = $this->statusPivot(clone $base, 'platforms', 'platform_id', 'platforms.name');
         $funnel = $this->funnel(clone $base);
 
         return [
             'period' => $period,
-            'useDate' => $useDate,
+            'periodOffset' => $offset,
+            'periodLabel' => $periodLabel,
             'from' => $from,
             'to' => $to,
             'timeSeriesLabels' => $timeSeries['labels'],
@@ -60,67 +61,119 @@ class DashboardService
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * @return array{0: string, 1: string, 2: string}
      */
-    private function resolveRange(string $period, ?string $from, ?string $to): array
+    private function resolveRange(string $period, int $offset): array
     {
-        $toDate = $to ? Carbon::parse($to)->toDateString() : Carbon::now()->toDateString();
-
-        if ($from) {
-            return [Carbon::parse($from)->toDateString(), $toDate];
-        }
-
-        $end = Carbon::parse($toDate);
-
-        $start = match ($period) {
-            'day' => $end->copy()->subDays(29),
-            'week' => $end->copy()->subMonth(),
-            'month' => $end->copy()->subMonths(11)->startOfMonth(),
-            'year' => $end->copy()->subYears(5)->startOfYear(),
-            default => $end->copy()->subDays(29),
+        $anchor = match ($period) {
+            'week' => Carbon::now()->addWeeks($offset),
+            'month' => Carbon::now()->addMonthsNoOverflow($offset),
+            'year' => Carbon::now()->addYears($offset),
+            default => Carbon::now()->addWeeks($offset),
         };
 
-        return [$start->toDateString(), $toDate];
+        [$from, $to] = match ($period) {
+            'week' => [
+                $anchor->copy()->startOfWeek(),
+                $anchor->copy()->endOfWeek(),
+            ],
+            'month' => [
+                $anchor->copy()->startOfMonth(),
+                $anchor->copy()->endOfMonth(),
+            ],
+            'year' => [
+                $anchor->copy()->startOfYear(),
+                $anchor->copy()->endOfYear(),
+            ],
+            default => [
+                $anchor->copy()->startOfWeek(),
+                $anchor->copy()->endOfWeek(),
+            ],
+        };
+
+        return [
+            $from->toDateString(),
+            $to->toDateString(),
+            $this->periodLabel($period, $from, $to),
+        ];
     }
 
-    private function resolveUseDate(array $input): bool
+    private function periodLabel(string $period, Carbon $from, Carbon $to): string
     {
-        if (! array_key_exists('use_date', $input)) {
-            return false;
-        }
-
-        return filter_var($input['use_date'], FILTER_VALIDATE_BOOL);
+        return match ($period) {
+            'week' => $from->isSameMonth($to)
+                ? $from->format('M j').' – '.$to->format('j, Y')
+                : $from->format('M j').' – '.$to->format('M j, Y'),
+            'month' => $from->format('F Y'),
+            'year' => $from->format('Y'),
+            default => $from->format('M j').' – '.$to->format('M j, Y'),
+        };
     }
 
     /**
      * @return array{labels: list<string>, values: list<int>}
      */
-    private function timeSeries($query, string $period): array
+    private function timeSeries($query, string $period, string $from, string $to): array
     {
         $dates = (clone $query)->pluck('applied_on');
 
-        $bucketKey = function (Carbon $d) use ($period): string {
-            return match ($period) {
-                'day' => $d->format('Y-m-d'),
-                'week' => $d->format('o').'-W'.str_pad((string) $d->format('W'), 2, '0', STR_PAD_LEFT),
-                'month' => $d->format('Y-m'),
-                'year' => $d->format('Y'),
-                default => $d->format('Y-m'),
-            };
-        };
+        if ($period === 'year') {
+            return $this->buildMonthlyTimeSeries($dates, $from, $to);
+        }
 
+        return $this->buildDailyTimeSeries($dates, $from, $to);
+    }
+
+    /**
+     * @return array{labels: list<string>, values: list<int>}
+     */
+    private function buildDailyTimeSeries($dates, string $from, string $to): array
+    {
         $counts = [];
         foreach ($dates as $appliedOn) {
-            $d = Carbon::parse($appliedOn);
-            $k = $bucketKey($d);
-            $counts[$k] = ($counts[$k] ?? 0) + 1;
+            $key = Carbon::parse($appliedOn)->format('Y-m-d');
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
         }
-        ksort($counts);
 
-        return [
-            'labels' => array_keys($counts),
-            'values' => array_values($counts),
-        ];
+        $labels = [];
+        $values = [];
+        $cursor = Carbon::parse($from)->startOfDay();
+        $end = Carbon::parse($to)->startOfDay();
+
+        while ($cursor->lte($end)) {
+            $key = $cursor->format('Y-m-d');
+            $labels[] = $key;
+            $values[] = $counts[$key] ?? 0;
+            $cursor->addDay();
+        }
+
+        return ['labels' => $labels, 'values' => $values];
+    }
+
+    /**
+     * @return array{labels: list<string>, values: list<int>}
+     */
+    private function buildMonthlyTimeSeries($dates, string $from, string $to): array
+    {
+        $counts = [];
+        foreach ($dates as $appliedOn) {
+            $key = Carbon::parse($appliedOn)->format('Y-m');
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+
+        $labels = [];
+        $values = [];
+        $cursor = Carbon::parse($from)->startOfMonth();
+        $end = Carbon::parse($to)->startOfMonth();
+
+        while ($cursor->lte($end)) {
+            $key = $cursor->format('Y-m');
+            $labels[] = $cursor->format('M Y');
+            $values[] = $counts[$key] ?? 0;
+            $cursor->addMonth();
+        }
+
+        return ['labels' => $labels, 'values' => $values];
     }
 
     /**

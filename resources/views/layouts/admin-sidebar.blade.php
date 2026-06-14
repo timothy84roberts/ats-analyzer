@@ -3,6 +3,7 @@
     $isApps = request()->routeIs('applications.*');
     $isFinancial = request()->routeIs('financial.*');
     $isScan = request()->routeIs('ats-scanner.*');
+    $isSchedule = request()->routeIs('schedule.*');
     $isSettings = request()->routeIs('settings.*') || request()->routeIs('countries.*') || request()->routeIs('platforms.*') || request()->routeIs('profile.*');
 @endphp
 
@@ -42,6 +43,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5m0 9V18A2.25 2.25 0 0 1 18 20.25h-1.5m-9 0H6A2.25 2.25 0 0 1 3.75 18v-1.5M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
                 {{ __('ATS Scan') }}
+            </a>
+            <a href="{{ route('schedule.index') }}" class="admin-sidebar__link {{ $isSchedule ? 'is-active' : '' }}" @click="mobileNav = false">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+                {{ __('Schedule') }}
             </a>
             <a href="{{ route('financial.index') }}" class="admin-sidebar__link {{ $isFinancial ? 'is-active' : '' }}" @click="mobileNav = false">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">

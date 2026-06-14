@@ -13,7 +13,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request, DashboardService $dashboard): View
     {
-        $input = $request->only(['period', 'use_date', 'from', 'to', 'country_id', 'platform_id', 'outcome_status']);
+        $input = $request->only(['period', 'offset', 'country_id', 'platform_id', 'outcome_status']);
         $data = $dashboard->build($request->user(), $input);
 
         return view('dashboard', array_merge($data, [
