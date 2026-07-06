@@ -17,15 +17,38 @@ class CountryCatalogStoreTest extends TestCase
     {
         parent::setUp();
         Cache::flush();
+        config(['countries.catalog_api_key' => 'test-key']);
         app(CountryCatalogService::class)->clearCache();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $objects
+     */
+    private function fakeCatalogResponse(array $objects): void
+    {
+        Http::fake([
+            'https://api.restcountries.com/countries/v5*' => Http::response([
+                'data' => [
+                    'objects' => $objects,
+                    'meta' => [
+                        'total' => count($objects),
+                        'count' => count($objects),
+                        'limit' => 100,
+                        'offset' => 0,
+                        'more' => false,
+                    ],
+                ],
+            ], 200),
+        ]);
     }
 
     public function test_store_creates_country_using_catalog_api(): void
     {
-        Http::fake([
-            'https://restcountries.com/v3.1/*' => Http::response([
-                ['cca2' => 'TX', 'name' => ['common' => 'Testland'], 'ccn3' => '999'],
-            ], 200),
+        $this->fakeCatalogResponse([
+            [
+                'codes' => ['alpha_2' => 'TX', 'ccn3' => '999'],
+                'names' => ['common' => 'Testland'],
+            ],
         ]);
 
         $user = User::factory()->create();
@@ -44,10 +67,11 @@ class CountryCatalogStoreTest extends TestCase
 
     public function test_store_rejects_code_not_in_catalog(): void
     {
-        Http::fake([
-            'https://restcountries.com/v3.1/*' => Http::response([
-                ['cca2' => 'AA', 'name' => ['common' => 'Alpha'], 'ccn3' => '001'],
-            ], 200),
+        $this->fakeCatalogResponse([
+            [
+                'codes' => ['alpha_2' => 'AA', 'ccn3' => '001'],
+                'names' => ['common' => 'Alpha'],
+            ],
         ]);
 
         $user = User::factory()->create();
@@ -56,5 +80,43 @@ class CountryCatalogStoreTest extends TestCase
             ->from(route('countries.create'))
             ->post(route('countries.store'), ['code' => 'ZZ'])
             ->assertSessionHasErrors('code');
+    }
+
+    public function test_create_works_without_api_key_using_bundled_catalog(): void
+    {
+        config(['countries.catalog_api_key' => '']);
+        app(CountryCatalogService::class)->clearCache();
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('countries.create'))
+            ->assertOk()
+            ->assertViewHas('options');
+    }
+
+    public function test_create_shows_catalog_error_when_bundled_catalog_missing(): void
+    {
+        config(['countries.catalog_api_key' => '']);
+        app(CountryCatalogService::class)->clearCache();
+
+        $path = database_path('data/countries-catalog.json');
+        $backup = $path.'.bak';
+        if (file_exists($path)) {
+            rename($path, $backup);
+        }
+
+        try {
+            $user = User::factory()->create();
+
+            $this->actingAs($user)
+                ->get(route('countries.create'))
+                ->assertRedirect(route('countries.index'))
+                ->assertSessionHasErrors('catalog');
+        } finally {
+            if (file_exists($backup)) {
+                rename($backup, $path);
+            }
+        }
     }
 }

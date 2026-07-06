@@ -30,6 +30,11 @@ class CountryController extends Controller
                 ->withErrors(['catalog' => __('Could not load the country list from the internet. Please try again later.')]);
         }
 
+        if ($all === []) {
+            return redirect()->route('countries.index')
+                ->withErrors(['catalog' => __('Could not load the country list from the internet. Please try again later.')]);
+        }
+
         $existing = Country::query()->pluck('code')->map(fn (string $c): string => strtoupper($c))->all();
         $options = array_values(array_filter($all, fn (array $row): bool => ! in_array($row['code'], $existing, true)));
 

@@ -7,7 +7,7 @@
     </x-slot>
 
     <p class="admin-muted-hint" style="margin: 0 0 20px;">
-        {{ __('Choose a country from the public REST Countries catalog. Names and ISO codes come from the API; you cannot edit them after adding.') }}
+        {{ __('Choose a country from the ISO catalog. Names and ISO codes are fixed after adding.') }}
     </p>
 
     <div class="admin-form-page">
