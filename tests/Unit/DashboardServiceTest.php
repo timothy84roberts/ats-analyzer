@@ -28,17 +28,17 @@ class DashboardServiceTest extends TestCase
     {
         Carbon::setTestNow('2026-06-15');
 
-        $user = $this->seedUserWithApplication('2026-06-10');
-        $this->seedApplication($user, '2026-06-12');
+        $user = $this->seedUserWithApplication('2026-06-15');
+        $this->seedApplication($user, '2026-06-19');
         $this->seedApplication($user, '2026-05-01');
 
-        $data = $this->service->build($user, ['period' => 'week']);
+        $data = $this->service->build(['period' => 'week', 'user_id' => $user->id]);
 
         $this->assertCount(7, $data['timeSeriesLabels']);
         $this->assertSame('2026-06-15', $data['timeSeriesLabels'][0]);
         $this->assertSame('2026-06-21', $data['timeSeriesLabels'][6]);
         $this->assertSame(2, array_sum($data['timeSeriesValues']));
-        $this->assertSame(0, $data['timeSeriesValues'][0]);
+        $this->assertSame(1, $data['timeSeriesValues'][0]);
         $this->assertSame(1, $data['timeSeriesValues'][4]);
 
         Carbon::setTestNow();
@@ -49,10 +49,10 @@ class DashboardServiceTest extends TestCase
         Carbon::setTestNow('2026-06-15');
 
         $user = $this->seedUserWithApplication('2026-06-01');
-        $this->seedApplication($user, '2026-06-30');
+        $this->seedApplication($user, '2026-06-15');
         $this->seedApplication($user, '2026-05-31');
 
-        $data = $this->service->build($user, ['period' => 'month']);
+        $data = $this->service->build(['period' => 'month', 'user_id' => $user->id]);
 
         $this->assertCount(30, $data['timeSeriesLabels']);
         $this->assertSame('2026-06-01', $data['timeSeriesLabels'][0]);
@@ -71,7 +71,7 @@ class DashboardServiceTest extends TestCase
         $this->seedApplication($user, '2026-03-20');
         $this->seedApplication($user, '2025-12-31');
 
-        $data = $this->service->build($user, ['period' => 'year']);
+        $data = $this->service->build(['period' => 'year', 'user_id' => $user->id]);
 
         $this->assertCount(12, $data['timeSeriesLabels']);
         $this->assertSame('Jan 2026', $data['timeSeriesLabels'][0]);
@@ -87,12 +87,12 @@ class DashboardServiceTest extends TestCase
     {
         Carbon::setTestNow('2026-06-15');
 
-        $user = $this->seedUserWithApplication('2026-05-20');
-        $this->seedApplication($user, '2026-06-10');
+        $user = $this->seedUserWithApplication('2026-06-10');
+        $this->seedApplication($user, '2026-06-16');
 
-        $data = $this->service->build($user, ['period' => 'week', 'offset' => -1]);
+        $data = $this->service->build(['period' => 'week', 'offset' => -1, 'user_id' => $user->id]);
 
-        $this->assertSame('May 18 – 24, 2026', $data['periodLabel']);
+        $this->assertSame('Jun 8 – 14, 2026', $data['periodLabel']);
         $this->assertSame(1, array_sum($data['timeSeriesValues']));
 
         Carbon::setTestNow();
@@ -105,7 +105,7 @@ class DashboardServiceTest extends TestCase
         $user = $this->seedUserWithApplication('2026-05-10');
         $this->seedApplication($user, '2026-06-01');
 
-        $data = $this->service->build($user, ['period' => 'month', 'offset' => -1]);
+        $data = $this->service->build(['period' => 'month', 'offset' => -1, 'user_id' => $user->id]);
 
         $this->assertSame('May 2026', $data['periodLabel']);
         $this->assertSame(1, array_sum($data['timeSeriesValues']));
@@ -120,10 +120,46 @@ class DashboardServiceTest extends TestCase
         $user = $this->seedUserWithApplication('2025-07-01');
         $this->seedApplication($user, '2026-01-01');
 
-        $data = $this->service->build($user, ['period' => 'year', 'offset' => -1]);
+        $data = $this->service->build(['period' => 'year', 'offset' => -1, 'user_id' => $user->id]);
 
         $this->assertSame('2025', $data['periodLabel']);
         $this->assertSame(1, array_sum($data['timeSeriesValues']));
+
+        Carbon::setTestNow();
+    }
+
+    public function test_without_user_id_aggregates_all_managed_users(): void
+    {
+        Carbon::setTestNow('2026-06-15');
+
+        $alice = $this->seedUserWithApplication('2026-06-15');
+        $bob = User::factory()->create();
+        $this->seedApplication($bob, '2026-06-16');
+
+        $data = $this->service->build(['period' => 'week']);
+
+        $this->assertSame(2, array_sum($data['timeSeriesValues']));
+        $this->assertSame(1, $data['timeSeriesValues'][0]);
+        $this->assertSame(1, $data['timeSeriesValues'][1]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_with_user_id_scopes_aggregates_to_that_user(): void
+    {
+        Carbon::setTestNow('2026-06-15');
+
+        $alice = $this->seedUserWithApplication('2026-06-15');
+        $this->seedApplication($alice, '2026-06-17');
+        $bob = User::factory()->create();
+        $this->seedApplication($bob, '2026-06-16');
+
+        $data = $this->service->build(['period' => 'week', 'user_id' => $alice->id]);
+
+        $this->assertSame(2, array_sum($data['timeSeriesValues']));
+        $this->assertSame(1, $data['timeSeriesValues'][0]);
+        $this->assertSame(0, $data['timeSeriesValues'][1]);
+        $this->assertSame(1, $data['timeSeriesValues'][2]);
 
         Carbon::setTestNow();
     }
@@ -141,7 +177,10 @@ class DashboardServiceTest extends TestCase
     {
         $country = Country::factory()->create();
         $platform = Platform::factory()->create();
-        $stage = PipelineStage::factory()->create(['slug' => 'resume_submitted', 'sort_order' => 10]);
+        $stage = PipelineStage::query()->firstOrCreate(
+            ['slug' => 'resume_submitted'],
+            ['label' => 'Resume submitted', 'sort_order' => 10]
+        );
 
         JobApplication::factory()->create([
             'user_id' => $user->id,

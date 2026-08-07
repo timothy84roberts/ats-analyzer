@@ -8,6 +8,7 @@ use App\Models\Country;
 use App\Models\JobApplication;
 use App\Models\PipelineStage;
 use App\Models\Platform;
+use App\Models\User;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,8 @@ class JobApplicationController extends Controller
     public function index(Request $request): View
     {
         $query = JobApplication::query()
-            ->with(['country', 'platform', 'pipelineStage'])
+            ->with(['user', 'country', 'platform', 'pipelineStage'])
+            ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->integer('user_id')))
             ->when($request->filled('country_id'), fn ($q) => $q->where('country_id', $request->integer('country_id')))
             ->when($request->filled('platform_id'), fn ($q) => $q->where('platform_id', $request->integer('platform_id')))
             ->when($request->filled('applied_on'), fn ($q) => $q->whereDate('applied_on', $request->input('applied_on')))
@@ -45,6 +47,7 @@ class JobApplicationController extends Controller
 
         return view('job-applications.index', [
             'applications' => $applications,
+            'managedUsers' => $this->managedUsers(),
             'countries' => Country::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'platforms' => Platform::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'outcomeStatuses' => JobApplication::outcomeStatuses(),
@@ -66,7 +69,6 @@ class JobApplicationController extends Controller
         }
 
         $data = collect($request->validated())->except(['resume'])->all();
-        $data['user_id'] = $request->user()->id;
         $data['outcome_status'] = JobApplication::OUTCOME_WAITING;
         $data['pipeline_stage_id'] = $defaultStageId;
         $data['rejection_reason'] = null;
@@ -81,12 +83,13 @@ class JobApplicationController extends Controller
         if ($request->boolean('keep_creating')) {
             return redirect()->route('applications.create')
                 ->with('status', 'Application created successfully.')
-                ->withInput($request->only([
-                    'country_id',
-                    'platform_id',
-                    'applied_on',
-                    'keep_creating',
-                ]));
+                ->withInput([
+                    'user_id' => (string) $request->input('user_id'),
+                    'country_id' => (string) $request->input('country_id'),
+                    'platform_id' => (string) $request->input('platform_id'),
+                    'applied_on' => $request->input('applied_on'),
+                    'keep_creating' => '1',
+                ]);
         }
 
         return redirect()->route('applications.index')->with('status', 'Application created successfully.');
@@ -103,7 +106,10 @@ class JobApplicationController extends Controller
             'calls.user',
         ]);
 
-        return view('job-applications.show', compact('application'));
+        return view('job-applications.show', [
+            'application' => $application,
+            'managedUsers' => $this->managedUsers(),
+        ]);
     }
 
     public function edit(JobApplication $application): View
@@ -167,6 +173,7 @@ class JobApplicationController extends Controller
     private function formOptions(): array
     {
         return [
+            'managedUsers' => $this->managedUsers(),
             'countries' => Country::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'platforms' => Platform::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'pipelineStages' => PipelineStage::query()->orderBy('sort_order')->get(),
@@ -177,5 +184,16 @@ class JobApplicationController extends Controller
                 JobApplication::OUTCOME_SUCCESS => __('Success'),
             ],
         ];
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    private function managedUsers()
+    {
+        return User::query()
+            ->where('is_admin', false)
+            ->orderBy('name')
+            ->get();
     }
 }

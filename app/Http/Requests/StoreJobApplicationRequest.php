@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Support\RichTextSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreJobApplicationRequest extends FormRequest
 {
@@ -28,6 +29,10 @@ class StoreJobApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_admin', false)),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:50000'],
             'country_id' => ['required', 'exists:countries,id'],

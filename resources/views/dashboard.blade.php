@@ -11,6 +11,11 @@
     @include('job-applications._pickers')
 
     @php
+        $userFilterOptions = collect([['id' => '', 'name' => __('All')]])
+            ->merge($filterUsers->map(fn ($u) => [
+                'id' => (string) $u->id,
+                'name' => $u->name,
+            ]))->values();
         $countryFilterOptions = collect([['id' => '', 'name' => __('All'), 'flag' => null]])
             ->merge($filterCountries->map(fn ($c) => [
                 'id' => (string) $c->id,
@@ -24,11 +29,13 @@
                 'logo' => $p->logo_url,
                 'initial' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($p->name, 0, 1)),
             ]))->values();
+        $selectedUserFilter = (string) request('user_id', '');
         $selectedCountryFilter = (string) request('country_id', '');
         $selectedPlatformFilter = (string) request('platform_id', '');
         $periodOffset = (int) ($periodOffset ?? 0);
         $navQuery = array_filter([
             'period' => $period ?? 'week',
+            'user_id' => request('user_id'),
             'country_id' => request('country_id'),
             'platform_id' => request('platform_id'),
             'outcome_status' => request('outcome_status'),
@@ -53,6 +60,23 @@
                     <a href="{{ $nextPeriodUrl }}" class="dash-period-nav" aria-label="{{ __('Next') }}">
                         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
                     </a>
+                </div>
+            </div>
+            <div class="admin-field" style="min-width: 200px;" x-data="optionPicker(@js($userFilterOptions), @js($selectedUserFilter))">
+                <span class="admin-label">{{ __('User') }}</span>
+                <input type="hidden" name="user_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="user in options" :key="user.id">
+                            <button type="button" @click="pick(user.id)" :style="selectedId === user.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <span x-text="user.name"></span>
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
             <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($countryFilterOptions), @js($selectedCountryFilter))">

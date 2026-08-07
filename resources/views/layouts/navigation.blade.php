@@ -15,9 +15,6 @@
                     <x-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                         {{ __('Applications') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('ats-scanner.index')" :active="request()->routeIs('ats-scanner.*')">
-                        {{ __('Scan') }}
-                    </x-nav-link>
                     <x-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
                         {{ __('Countries') }}
                     </x-nav-link>
@@ -75,9 +72,6 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                 {{ __('Applications') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('ats-scanner.index')" :active="request()->routeIs('ats-scanner.*')">
-                {{ __('Scan') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('countries.index')" :active="request()->routeIs('countries.*')">
                 {{ __('Countries') }}

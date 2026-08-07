@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\JobApplication;
-use App\Models\User;
 use Carbon\Carbon;
 
 class DashboardService
@@ -11,7 +10,7 @@ class DashboardService
     /**
      * @return array<string, mixed>
      */
-    public function build(User $user, array $input): array
+    public function build(array $input): array
     {
         $period = in_array($input['period'] ?? '', ['week', 'month', 'year'], true)
             ? $input['period']
@@ -20,7 +19,10 @@ class DashboardService
 
         [$from, $to, $periodLabel] = $this->resolveRange($period, $offset);
 
-        $base = JobApplication::query()->where('user_id', $user->id);
+        $base = JobApplication::query();
+        if (! empty($input['user_id'])) {
+            $base->where('user_id', (int) $input['user_id']);
+        }
         if ($from && $to) {
             $base->whereBetween('applied_on', [$from, $to]);
         }

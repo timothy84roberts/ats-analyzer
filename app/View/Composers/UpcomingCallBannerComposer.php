@@ -17,10 +17,9 @@ class UpcomingCallBannerComposer
         }
 
         $calls = JobApplicationCall::query()
-            ->whereHas('application', fn ($q) => $q->where('user_id', Auth::id()))
             ->where('scheduled_at', '>', now())
             ->where('scheduled_at', '<=', now()->addHours(12))
-            ->with(['application:id,title'])
+            ->with(['application:id,title', 'user:id,name'])
             ->orderBy('scheduled_at')
             ->get();
 

@@ -34,6 +34,10 @@ class UpdateJobApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_admin', false)),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:50000'],
             'outcome_status' => ['required', Rule::in(JobApplication::outcomeStatuses())],

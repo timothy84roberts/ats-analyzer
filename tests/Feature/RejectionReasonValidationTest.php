@@ -31,6 +31,7 @@ class RejectionReasonValidationTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->from(route('applications.edit', $application))->put(route('applications.update', $application), [
+            'user_id' => $user->id,
             'title' => $application->title,
             'description' => $application->description,
             'outcome_status' => JobApplication::OUTCOME_REJECTED,
@@ -55,6 +56,7 @@ class RejectionReasonValidationTest extends TestCase
         PipelineStage::factory()->create(['slug' => 'later', 'sort_order' => 90]);
 
         $response = $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'Backend engineer',
             'description' => null,
             'country_id' => $country->id,

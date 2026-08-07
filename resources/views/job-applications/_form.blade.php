@@ -18,11 +18,12 @@
     ])->values();
     $selectedPlatformId = (string) old('platform_id', $application?->platform_id ?? '');
     $defaultAppliedOn = old('applied_on', $application?->applied_on?->format('Y-m-d') ?? now()->format('Y-m-d'));
+    $selectedUserId = (string) old('user_id', $application?->user_id ?? '');
 @endphp
 <div class="admin-form-stack" @if ($editing) x-data="{ outcome: @js(old('outcome_status', $application?->outcome_status ?? $defaultOutcome)), outcomeOpen: false, stageId: @js((string) old('pipeline_stage_id', $application?->pipeline_stage_id ?? '')), stageOpen: false }" @endif>
     <div class="admin-field">
         <label class="admin-label" for="title">{{ __('Job title') }}</label>
-        <input id="title" class="admin-input" type="text" name="title" value="{{ old('title', $application?->title ?? '') }}" required @if(! $editing) autofocus @endif>
+        <input id="title" class="admin-input" type="text" name="title" value="{{ old('title', $application?->title ?? '') }}" required autofocus>
         <x-input-error :messages="$errors->get('title')" class="mt-2" />
     </div>
     <div class="admin-field">
@@ -280,10 +281,22 @@
             <x-input-error :messages="$errors->get('platform_id')" class="mt-2" />
         </div>
     </div>
-    <div class="admin-field">
-        <label class="admin-label" for="company_name">{{ __('Company') }}</label>
-        <input id="company_name" class="admin-input" type="text" name="company_name" value="{{ old('company_name', $application?->company_name ?? '') }}">
-        <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+    <div class="admin-field-grid-2">
+        <div class="admin-field">
+            <label class="admin-label" for="company_name">{{ __('Company') }}</label>
+            <input id="company_name" class="admin-input" type="text" name="company_name" value="{{ old('company_name', $application?->company_name ?? '') }}">
+            <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+        </div>
+        <div class="admin-field">
+            <label class="admin-label" for="user_id">{{ __('User') }}</label>
+            <select id="user_id" name="user_id" class="admin-select" required>
+                <option value="">{{ __('Select user') }}</option>
+                @foreach ($managedUsers as $managedUser)
+                    <option value="{{ $managedUser->id }}" @selected($selectedUserId === (string) $managedUser->id)>{{ $managedUser->name }} ({{ $managedUser->email }})</option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+        </div>
     </div>
     <div class="admin-field-grid-2">
         <div class="admin-field">

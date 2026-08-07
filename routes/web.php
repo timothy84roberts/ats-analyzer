@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AtsAnalysisController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinancialController;
@@ -12,6 +11,7 @@ use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -37,7 +37,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('applications.calls.destroy');
     Route::resource('applications', JobApplicationController::class);
 
+    Route::resource('users', UserController::class)->except(['show']);
+
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+    Route::post('/schedule', [ScheduleController::class, 'store'])->name('schedule.store');
 
     Route::get('/settings', SettingsController::class)->name('settings.index');
 
@@ -51,9 +54,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/financial/transactions/{transaction}', [FinancialController::class, 'update'])->name('financial.transactions.update');
     Route::delete('/financial/transactions/{transaction}', [FinancialController::class, 'destroy'])->name('financial.transactions.destroy');
     Route::post('/financial/settings', [FinancialController::class, 'updateSettings'])->name('financial.settings.update');
-
-    Route::get('/ats-scanner', [AtsAnalysisController::class, 'index'])->name('ats-scanner.index');
-    Route::post('/ats-scanner/analyze', [AtsAnalysisController::class, 'analyze'])->name('ats-scanner.analyze');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

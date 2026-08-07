@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -20,6 +21,18 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'address',
+        'country_code',
+        'city',
+        'state',
+        'birthday',
+        'linkedin',
+        'github',
+        'x_url',
+        'facebook',
+        'instagram',
+        'website',
         'password',
         'is_admin',
         'is_ats_lab_allowed',
@@ -38,20 +51,26 @@ class User extends Authenticatable
     /**
      * The attributes that should be cast.
      *
-     * @var array<string, string>
+     * @var array<string, mixed>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birthday' => 'date',
         'is_admin' => 'boolean',
         'is_ats_lab_allowed' => 'boolean',
     ];
 
-    public function jobApplications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function jobApplications(): HasMany
     {
         return $this->hasMany(JobApplication::class);
     }
 
-    public function atsAnalysisRuns(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function jobApplicationCalls(): HasMany
+    {
+        return $this->hasMany(JobApplicationCall::class);
+    }
+
+    public function atsAnalysisRuns(): HasMany
     {
         return $this->hasMany(AtsAnalysisRun::class);
     }

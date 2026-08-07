@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::query()->updateOrCreate(
-            ['email' => 'admin@gmail.com'],
+            ['email' => 'vector@mail.com'],
             [
                 'name' => 'Admin',
-                'password' => bcrypt('admin123!'),
+                'password' => bcrypt('rhfjreh123!'),
                 'is_admin' => true,
                 'is_ats_lab_allowed' => true,
             ]

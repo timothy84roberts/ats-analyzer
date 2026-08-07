@@ -18,6 +18,11 @@
     @include('job-applications._pickers')
 
     @php
+        $userFilterOptions = collect([['id' => '', 'name' => __('All')]])
+            ->merge($managedUsers->map(fn ($u) => [
+                'id' => (string) $u->id,
+                'name' => $u->name,
+            ]))->values();
         $countryFilterOptions = collect([['id' => '', 'name' => __('All'), 'flag' => null]])
             ->merge($countries->map(fn ($c) => [
                 'id' => (string) $c->id,
@@ -31,6 +36,7 @@
                 'logo' => $p->logo_url,
                 'initial' => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($p->name, 0, 1)),
             ]))->values();
+        $selectedUserFilter = (string) request('user_id', '');
         $selectedCountryFilter = (string) request('country_id', '');
         $selectedPlatformFilter = (string) request('platform_id', '');
     @endphp
@@ -39,7 +45,24 @@
         <form method="get" class="admin-toolbar">
             <div class="admin-field admin-field--grow">
                 <span class="admin-label">{{ __('Search title') }}</span>
-                <input type="text" name="q" value="{{ request('q') }}" class="admin-input" placeholder="{{ __('Job title…') }}">
+                <input type="text" name="q" value="{{ request('q') }}" class="admin-input" placeholder="{{ __('Job title…') }}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.form.requestSubmit();}">
+            </div>
+            <div class="admin-field" style="min-width: 200px;" x-data="optionPicker(@js($userFilterOptions), @js($selectedUserFilter))">
+                <span class="admin-label">{{ __('User') }}</span>
+                <input type="hidden" name="user_id" x-model="selectedId">
+                <div style="position: relative;">
+                    <button type="button" class="admin-select" @click="open = !open" style="display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;">
+                        <span x-text="selected() ? selected().name : '{{ __('All') }}'" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                        <span style="color: var(--admin-text-muted);">▾</span>
+                    </button>
+                    <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
+                        <template x-for="user in options" :key="user.id">
+                            <button type="button" @click="pick(user.id); $nextTick(() => $el.closest('form').requestSubmit())" :style="selectedId === user.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                                <span x-text="user.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
             </div>
             <div class="admin-field" style="min-width: 220px;" x-data="optionPicker(@js($countryFilterOptions), @js($selectedCountryFilter))">
                 <span class="admin-label">{{ __('Country') }}</span>
@@ -56,7 +79,7 @@
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
                         <template x-for="country in options" :key="country.id">
-                            <button type="button" @click="pick(country.id)" :style="selectedId === country.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                            <button type="button" @click="pick(country.id); $nextTick(() => $el.closest('form').requestSubmit())" :style="selectedId === country.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
                                 <template x-if="country.flag">
                                     <img :src="country.flag" :alt="country.name + ' flag'" width="20" height="14" style="border-radius:2px; object-fit:cover; flex-shrink:0;">
                                 </template>
@@ -81,7 +104,7 @@
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:220px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
                         <template x-for="platform in options" :key="platform.id">
-                            <button type="button" @click="pick(platform.id)" :style="selectedId === platform.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                            <button type="button" @click="pick(platform.id); $nextTick(() => $el.closest('form').requestSubmit())" :style="selectedId === platform.id ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
                                 <template x-if="platform.logo">
                                     <img :src="platform.logo" :alt="platform.name + ' logo'" width="20" height="20" style="border-radius:4px; object-fit:contain; flex-shrink:0; background:#fff;">
                                 </template>
@@ -113,12 +136,12 @@
                         <span style="color: var(--admin-text-muted);">▾</span>
                     </button>
                     <div x-show="open" x-cloak @click.outside="open = false" style="position:absolute; z-index:40; left:0; right:0; margin-top:6px; max-height:240px; overflow:auto; border:1px solid var(--admin-border); border-radius:var(--admin-radius-sm); background:var(--admin-surface); box-shadow:var(--admin-shadow);">
-                        <button type="button" @click="val = ''; open = false" :style="val === '' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                        <button type="button" @click="val = ''; open = false; $nextTick(() => $el.closest('form').requestSubmit())" :style="val === '' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
                             <span style="width:16px;flex-shrink:0;"></span>
                             <span>{{ __('All') }}</span>
                         </button>
                         @foreach ($outcomeStatuses as $o)
-                            <button type="button" @click="val = '{{ $o }}'; open = false" :style="val === '{{ $o }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
+                            <button type="button" @click="val = '{{ $o }}'; open = false; $nextTick(() => $el.closest('form').requestSubmit())" :style="val === '{{ $o }}' ? 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:var(--admin-accent-muted);color:var(--admin-text);border:none;text-align:left;cursor:pointer;' : 'display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:transparent;color:var(--admin-text);border:none;text-align:left;cursor:pointer;'">
                                 <x-outcome-icon :status="$o" :size="16" />
                                 <span>{{ ucfirst($o) }}</span>
                             </button>
@@ -128,11 +151,7 @@
             </div>
             <div class="admin-field">
                 <span class="admin-label">{{ __('Applied on') }}</span>
-                <input type="date" name="applied_on" value="{{ request('applied_on') }}" class="admin-input">
-            </div>
-            <div class="admin-field" style="align-self: flex-end;">
-                <span class="admin-label" style="opacity:0;">&nbsp;</span>
-                <button type="submit" class="admin-btn admin-btn--ghost">{{ __('Filter') }}</button>
+                <input type="date" name="applied_on" value="{{ request('applied_on') }}" class="admin-input" onchange="this.form.requestSubmit()">
             </div>
         </form>
     </div>
@@ -143,6 +162,7 @@
                 <thead>
                     <tr>
                         <th>{{ __('Title') }}</th>
+                        <th>{{ __('User') }}</th>
                         <th>{{ __('Company') }}</th>
                         <th style="width: 160px;">{{ __('Country') }}</th>
                         <th>{{ __('Platform') }}</th>
@@ -156,6 +176,16 @@
                     @forelse ($applications as $app)
                         <tr>
                             <td><a href="{{ route('applications.show', $app) }}">{{ $app->title }}</a></td>
+                            <td>
+                                @if ($app->user)
+                                    @php($hue = ($app->user->id * 47) % 360)
+                                    <span class="admin-pill" style="display:inline-flex;align-items:center;background:hsla({{ $hue }}, 55%, 42%, 0.14);color:hsl({{ $hue }}, 55%, 32%);">
+                                        {{ $app->user->name }}
+                                    </span>
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td>{{ $app->company_name ?? '—' }}</td>
                             <td>
                                 <span style="display: inline-flex; align-items: center; gap: 6px;">
@@ -304,6 +334,15 @@
                                                 <form method="post" action="{{ route('applications.calls.store', $app) }}" class="admin-form-stack admin-book-call-form" style="margin-top: 18px; width: 100%;">
                                                     @csrf
                                                     <div class="admin-field">
+                                                        <label class="admin-label" for="call-user-{{ $app->id }}">{{ __('User') }}</label>
+                                                        <select id="call-user-{{ $app->id }}" name="user_id" class="admin-select" required>
+                                                            <option value="">{{ __('Select user') }}</option>
+                                                            @foreach ($managedUsers as $managedUser)
+                                                                <option value="{{ $managedUser->id }}" @selected((string) $app->user_id === (string) $managedUser->id)>{{ $managedUser->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="admin-field">
                                                         <label class="admin-label" for="call-title-{{ $app->id }}">{{ __('Title') }}</label>
                                                         <input id="call-title-{{ $app->id }}" type="text" name="title" class="admin-input" placeholder="{{ __('e.g. Phone screen with recruiter') }}" required>
                                                     </div>
@@ -327,7 +366,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="text-align: center; padding: 48px; color: var(--admin-text-muted);">{{ __('No applications yet.') }}</td></tr>
+                        <tr><td colspan="9" style="text-align: center; padding: 48px; color: var(--admin-text-muted);">{{ __('No applications yet.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

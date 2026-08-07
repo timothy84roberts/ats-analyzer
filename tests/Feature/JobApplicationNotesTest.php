@@ -23,6 +23,7 @@ class JobApplicationNotesTest extends TestCase
         $defaultStage = PipelineStage::factory()->create(['slug' => 'resume_submitted', 'sort_order' => 10]);
 
         $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'Backend engineer',
             'description' => null,
             'country_id' => $country->id,
@@ -66,6 +67,7 @@ class JobApplicationNotesTest extends TestCase
         PipelineStage::factory()->create(['slug' => 'resume_submitted', 'sort_order' => 10]);
 
         $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'QA role',
             'description' => null,
             'country_id' => $country->id,
@@ -101,6 +103,7 @@ class JobApplicationNotesTest extends TestCase
         PipelineStage::factory()->create(['slug' => 'resume_submitted', 'sort_order' => 10]);
 
         $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'App one',
             'description' => null,
             'country_id' => $country->id,
@@ -110,6 +113,7 @@ class JobApplicationNotesTest extends TestCase
             'applied_on' => now()->format('Y-m-d'),
         ])->assertSessionHasNoErrors();
         $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'App two',
             'description' => null,
             'country_id' => $country->id,

@@ -23,36 +23,40 @@ class DashboardAccessTest extends TestCase
 
     public function test_authenticated_user_can_view_dashboard(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['is_admin' => true]);
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee(__('User'), false);
     }
 
     public function test_dashboard_outcome_cards_show_percent_of_total(): void
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->create(['is_admin' => true]);
+        $managed = User::factory()->create(['is_admin' => false]);
         $country = Country::factory()->create();
         $platform = Platform::factory()->create();
         $stage = PipelineStage::factory()->create(['slug' => 'resume_submitted', 'sort_order' => 10]);
 
         JobApplication::factory()->count(3)->create([
-            'user_id' => $user->id,
+            'user_id' => $managed->id,
             'country_id' => $country->id,
             'platform_id' => $platform->id,
             'pipeline_stage_id' => $stage->id,
             'outcome_status' => JobApplication::OUTCOME_WAITING,
+            'applied_on' => now()->toDateString(),
         ]);
         JobApplication::factory()->create([
-            'user_id' => $user->id,
+            'user_id' => $managed->id,
             'country_id' => $country->id,
             'platform_id' => $platform->id,
             'pipeline_stage_id' => $stage->id,
             'outcome_status' => JobApplication::OUTCOME_REJECTED,
+            'applied_on' => now()->toDateString(),
         ]);
 
-        $this->actingAs($user)->get(route('dashboard'))
+        $this->actingAs($admin)->get(route('dashboard'))
             ->assertOk()
             ->assertSee('75%', false)
             ->assertSee('25%', false);

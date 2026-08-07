@@ -6,6 +6,7 @@ use App\Models\JobApplication;
 use App\Models\JobApplicationCall;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class JobApplicationCallController extends Controller
 {
@@ -15,6 +16,10 @@ class JobApplicationCallController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:20000'],
             'scheduled_at' => ['required', 'date'],
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_admin', false)),
+            ],
         ]);
 
         $title = trim($data['title']);
@@ -27,7 +32,7 @@ class JobApplicationCallController extends Controller
 
         JobApplicationCall::create([
             'job_application_id' => $application->id,
-            'user_id' => $request->user()->id,
+            'user_id' => $data['user_id'],
             'title' => $title,
             'description' => $description,
             'scheduled_at' => $data['scheduled_at'],

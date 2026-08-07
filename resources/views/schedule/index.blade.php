@@ -1,17 +1,24 @@
 <x-app-layout>
     <x-slot name="header">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:var(--admin-accent-muted);color:var(--admin-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+        <div class="admin-page-head__row">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--admin-accent-muted);color:var(--admin-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                </div>
+                <div>
+                    <h1 style="margin:0;">{{ __('Schedule') }}</h1>
+                    <div style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:1px;">{{ __('Your call reservations at a glance') }}</div>
+                </div>
             </div>
-            <div>
-                <h1 style="margin:0;">{{ __('Schedule') }}</h1>
-                <div style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:1px;">{{ __('Your call reservations at a glance') }}</div>
-            </div>
+            <button type="button" class="admin-btn admin-btn--primary" onclick="window.dispatchEvent(new CustomEvent('open-schedule-create'))">{{ __('Add schedule') }}</button>
         </div>
     </x-slot>
 
-    <div class="admin-card admin-card--pad" x-data="scheduleApp(@js($calls))">
+    @if (session('status'))
+        <div class="admin-alert admin-alert--success">{{ session('status') }}</div>
+    @endif
+
+    <div class="admin-card admin-card--pad" x-data="scheduleApp(@js($calls))" @open-schedule-create.window="createOpen = true">
 
         {{-- Toolbar --}}
         <div class="cal-toolbar">
@@ -28,10 +35,13 @@
                 <div class="cal-title" x-text="title"></div>
             </div>
 
-            <div class="cal-viewswitch">
-                <button type="button" :class="view==='day' ? 'is-active' : ''" @click="setView('day')">{{ __('Day') }}</button>
-                <button type="button" :class="view==='week' ? 'is-active' : ''" @click="setView('week')">{{ __('Week') }}</button>
-                <button type="button" :class="view==='month' ? 'is-active' : ''" @click="setView('month')">{{ __('Month') }}</button>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="admin-btn admin-btn--ghost" @click="createOpen = true">{{ __('Add schedule') }}</button>
+                <div class="cal-viewswitch">
+                    <button type="button" :class="view==='day' ? 'is-active' : ''" @click="setView('day')">{{ __('Day') }}</button>
+                    <button type="button" :class="view==='week' ? 'is-active' : ''" @click="setView('week')">{{ __('Week') }}</button>
+                    <button type="button" :class="view==='month' ? 'is-active' : ''" @click="setView('month')">{{ __('Month') }}</button>
+                </div>
             </div>
         </div>
 
@@ -48,10 +58,11 @@
                         <button type="button" class="cal-daynum" @click="goToDay(day.date)" x-text="day.date.getDate()"></button>
                         <div class="cal-cell-events">
                             <template x-for="ev in day.events.slice(0, 3)" :key="ev.id">
-                                <button type="button" class="cal-chip" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" @click="openEvent(ev)">
-                                    <span class="cal-chip__dot"></span>
-                                    <span class="cal-chip__time" x-text="fmtTime(ev.startDate)"></span>
+                                <button type="button" class="cal-chip" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" :style="userAccentStyle(ev)" @click="openEvent(ev)">
+                                    <span class="cal-chip__dot" :style="userDotStyle(ev)"></span>
+                                    <span class="cal-chip__time" :style="userTextStyle(ev)" x-text="fmtTime(ev.startDate)"></span>
                                     <span class="cal-chip__title" x-text="ev.title"></span>
+                                    <span class="cal-user-tag cal-user-tag--compact" x-show="ev.user_name" :style="userTagStyle(ev)" x-text="ev.user_name"></span>
                                 </button>
                             </template>
                             <button type="button" class="cal-more" x-show="day.events.length > 3" @click="goToDay(day.date)"
@@ -72,13 +83,14 @@
                     </button>
                     <div class="cal-week-body">
                         <template x-for="ev in day.events" :key="ev.id">
-                            <button type="button" class="cal-event-card" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" @click="openEvent(ev)">
-                                <span class="cal-event-card__time">
+                            <button type="button" class="cal-event-card" :class="{ 'is-past': isPast(ev.startDate), 'is-soon': isSoon(ev.startDate) }" :style="userCardStyle(ev)" @click="openEvent(ev)">
+                                <span class="cal-event-card__time" :style="userTextStyle(ev)">
                                     <span x-text="fmtTime(ev.startDate)"></span>
                                     <span class="cal-badge cal-badge--danger" x-show="isPast(ev.startDate)">{{ __('Expired') }}</span>
                                     <span class="cal-badge cal-badge--warning cal-badge--lg" x-show="isSoon(ev.startDate)">{{ __('Soon') }}</span>
                                 </span>
                                 <span class="cal-event-card__title" x-text="ev.title"></span>
+                                <span class="cal-user-tag" x-show="ev.user_name" :style="userTagStyle(ev)" x-text="ev.user_name"></span>
                                 <span class="cal-event-card__sub" x-show="ev.application_title" x-text="ev.company_name || ev.application_title"></span>
                             </button>
                         </template>
@@ -102,9 +114,10 @@
 
                     <div class="cal-day-col">
                         <template x-for="p in dayLayout" :key="p.ev.id">
-                            <button type="button" class="cal-day-event" :class="{ 'is-past': isPast(p.ev.startDate), 'is-soon': isSoon(p.ev.startDate) }" :style="p.style" @click="openEvent(p.ev)">
-                                <span class="cal-day-event__time" x-text="fmtTime(p.ev.startDate)"></span>
+                            <button type="button" class="cal-day-event" :class="{ 'is-past': isPast(p.ev.startDate), 'is-soon': isSoon(p.ev.startDate) }" :style="p.style + userCardStyle(p.ev)" @click="openEvent(p.ev)">
+                                <span class="cal-day-event__time" :style="userTextStyle(p.ev)" x-text="fmtTime(p.ev.startDate)"></span>
                                 <span class="cal-day-event__title" x-text="p.ev.title"></span>
+                                <span class="cal-user-tag cal-user-tag--compact" x-show="p.ev.user_name" :style="userTagStyle(p.ev)" x-text="p.ev.user_name"></span>
                             </button>
                         </template>
                     </div>
@@ -144,10 +157,22 @@
                         <span class="cal-badge cal-badge--danger" x-show="selected && isPast(selected.startDate)">{{ __('Expired') }}</span>
                         <span class="cal-badge cal-badge--warning cal-badge--lg" x-show="selected && isSoon(selected.startDate)">{{ __('Soon') }}</span>
                     </div>
+                    <template x-if="selected && selected.user_name">
+                        <div class="cal-detail-row">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+                            <span class="cal-user-tag" :style="selected ? userTagStyle(selected) : ''" x-text="selected?.user_name"></span>
+                        </div>
+                    </template>
                     <template x-if="selected && (selected.application_title || selected.company_name)">
                         <div class="cal-detail-row">
                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
                             <span x-text="selected ? (selected.application_title || '') + (selected.company_name ? ' · ' + selected.company_name : '') : ''"></span>
+                        </div>
+                    </template>
+                    <template x-if="selected && !selected.application_id">
+                        <div class="cal-detail-row" style="color:var(--admin-text-muted);">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+                            <span>{{ __('Standalone schedule item') }}</span>
                         </div>
                     </template>
                     <template x-if="selected && selected.description">
@@ -160,6 +185,70 @@
                             <a :href="selected.url" class="admin-btn admin-btn--primary" style="text-decoration:none;">{{ __('Open application') }}</a>
                         </template>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ───────────────── CREATE MODAL ───────────────── --}}
+        <div x-show="createOpen" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             @keydown.escape.window="createOpen = false"
+             style="position:fixed;inset:0;z-index:300;">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);" @click="createOpen = false"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:none;">
+                <div class="admin-modal-panel" style="position:relative;pointer-events:auto;width:100%;max-width:520px;border-radius:var(--admin-radius);padding:24px 26px 26px;" @click.stop>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+                        <h2 style="margin:0;font-size:1.1rem;font-weight:700;">{{ __('Add schedule') }}</h2>
+                        <button type="button" class="admin-btn admin-btn--ghost" @click="createOpen = false">{{ __('Close') }}</button>
+                    </div>
+                    <form method="post" action="{{ route('schedule.store') }}" class="admin-form-stack">
+                        @csrf
+                        <div class="admin-field">
+                            <label class="admin-label" for="schedule-user-id">{{ __('User') }}</label>
+                            <select id="schedule-user-id" name="user_id" class="admin-select" required>
+                                <option value="">{{ __('Select user') }}</option>
+                                @foreach ($managedUsers as $managedUser)
+                                    <option value="{{ $managedUser->id }}" @selected((string) old('user_id') === (string) $managedUser->id)>{{ $managedUser->name }} ({{ $managedUser->email }})</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                        </div>
+                        <div class="admin-field">
+                            <label class="admin-label" for="schedule-title">{{ __('Title') }}</label>
+                            <input id="schedule-title" type="text" name="title" class="admin-input" value="{{ old('title') }}" placeholder="{{ __('e.g. Phone screen with recruiter') }}" required>
+                            <x-input-error :messages="$errors->get('title')" class="mt-2" />
+                        </div>
+                        <div class="admin-field">
+                            <label class="admin-label" for="schedule-description">{{ __('Description') }}</label>
+                            <textarea id="schedule-description" name="description" rows="4" class="admin-textarea" placeholder="{{ __('Agenda, link, dial-in…') }}">{{ old('description') }}</textarea>
+                            <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                        </div>
+                        <div class="admin-field">
+                            <label class="admin-label" for="schedule-scheduled-at">{{ __('Date & time') }}</label>
+                            <input id="schedule-scheduled-at" type="datetime-local" name="scheduled_at" class="admin-input" value="{{ old('scheduled_at') }}" required>
+                            <x-input-error :messages="$errors->get('scheduled_at')" class="mt-2" />
+                        </div>
+                        <div class="admin-field">
+                            <label class="admin-label" for="schedule-job-application-id">{{ __('Job application') }} <span style="color:var(--admin-text-muted);font-weight:500;">({{ __('optional') }})</span></label>
+                            <select id="schedule-job-application-id" name="job_application_id" class="admin-select">
+                                <option value="">{{ __('None') }}</option>
+                                @foreach ($applications as $application)
+                                    <option value="{{ $application->id }}" @selected((string) old('job_application_id') === (string) $application->id)>
+                                        {{ $application->title }}@if($application->company_name) · {{ $application->company_name }}@endif
+                                        @if($application->user) ({{ $application->user->name }})@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('job_application_id')" class="mt-2" />
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;">
+                            <button type="button" class="admin-btn admin-btn--ghost" @click="createOpen = false">{{ __('Cancel') }}</button>
+                            <button type="submit" class="admin-btn admin-btn--primary">{{ __('Save') }}</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -193,7 +282,7 @@
             .cal-daynum:hover { background:var(--admin-surface-2); }
             .cal-cell.is-today .cal-daynum { background:var(--admin-accent); color:#fff; }
             .cal-cell-events { display:flex; flex-direction:column; gap:3px; overflow:hidden; min-width:0; }
-            .cal-chip { display:flex; align-items:center; gap:5px; width:100%; max-width:100%; text-align:left; border:none; background:var(--admin-accent-muted); border-radius:6px; padding:3px 6px; cursor:pointer; font-size:0.72rem; color:var(--admin-text); overflow:hidden; min-width:0; }
+            .cal-chip { display:flex; align-items:center; flex-wrap:wrap; gap:5px; width:100%; max-width:100%; text-align:left; border:none; background:var(--admin-accent-muted); border-radius:6px; padding:3px 6px; cursor:pointer; font-size:0.72rem; color:var(--admin-text); overflow:hidden; min-width:0; }
             .cal-chip:hover { filter:brightness(0.97); }
             .cal-chip__dot { width:6px; height:6px; border-radius:50%; background:var(--admin-accent); flex-shrink:0; }
             .cal-chip__time { font-weight:700; color:var(--admin-accent-text); flex-shrink:0; }
@@ -233,6 +322,9 @@
             .cal-now::before { content:''; position:absolute; left:-5px; top:-5px; width:8px; height:8px; border-radius:50%; background:#ef4444; }
 
             .cal-empty { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--admin-text-muted); pointer-events:none; }
+
+            .cal-user-tag { display:inline-flex; align-items:center; align-self:flex-start; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:1px 7px; border-radius:999px; font-size:0.68rem; font-weight:700; line-height:1.4; }
+            .cal-user-tag--compact { margin-top:1px; font-size:0.62rem; padding:0 5px; }
 
             .cal-detail-row { display:flex; align-items:center; gap:10px; font-size:0.875rem; color:var(--admin-text); margin-bottom:10px; }
             .cal-detail-row svg { color:var(--admin-text-muted); flex-shrink:0; }
@@ -289,6 +381,7 @@
                     view: 'month',
                     cursor: new Date(),
                     selected: null,
+                    createOpen: @json($errors->any()),
                     hourHeight: 56,
                     weekdayNames: ['{{ __('Sun') }}', '{{ __('Mon') }}', '{{ __('Tue') }}', '{{ __('Wed') }}', '{{ __('Thu') }}', '{{ __('Fri') }}', '{{ __('Sat') }}'],
                     events: [],
@@ -313,6 +406,29 @@
                         const now = Date.now();
                         const t = d.getTime();
                         return t >= now && t <= now + 12 * 3600000;
+                    },
+                    userHue(ev) { return Number(ev?.user_hue ?? 0); },
+                    userAccentStyle(ev) {
+                        if (this.isPast(ev.startDate) || this.isSoon(ev.startDate)) return '';
+                        const h = this.userHue(ev);
+                        return `background:hsla(${h}, 55%, 42%, 0.14);`;
+                    },
+                    userDotStyle(ev) {
+                        if (this.isPast(ev.startDate) || this.isSoon(ev.startDate)) return '';
+                        return `background:hsl(${this.userHue(ev)}, 55%, 42%);`;
+                    },
+                    userTextStyle(ev) {
+                        if (this.isPast(ev.startDate) || this.isSoon(ev.startDate)) return '';
+                        return `color:hsl(${this.userHue(ev)}, 55%, 32%);`;
+                    },
+                    userCardStyle(ev) {
+                        if (this.isPast(ev.startDate) || this.isSoon(ev.startDate)) return '';
+                        const h = this.userHue(ev);
+                        return `border-left-color:hsl(${h}, 55%, 42%);background:hsla(${h}, 55%, 42%, 0.14);`;
+                    },
+                    userTagStyle(ev) {
+                        const h = this.userHue(ev);
+                        return `background:hsla(${h}, 55%, 42%, 0.14);color:hsl(${h}, 55%, 32%);`;
                     },
 
                     fmtTime(d) { return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); },

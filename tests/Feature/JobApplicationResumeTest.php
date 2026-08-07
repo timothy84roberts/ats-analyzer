@@ -37,6 +37,7 @@ class JobApplicationResumeTest extends TestCase
         $file = UploadedFile::fake()->create('cv.pdf', 50, 'application/pdf');
 
         $this->actingAs($user)->post(route('applications.store'), [
+            'user_id' => $user->id,
             'title' => 'Engineer',
             'description' => null,
             'country_id' => $country->id,
@@ -115,6 +116,7 @@ class JobApplicationResumeTest extends TestCase
         ]);
 
         $this->actingAs($user)->put(route('applications.update', $application), [
+            'user_id' => $user->id,
             'title' => 'Role',
             'description' => null,
             'outcome_status' => $application->outcome_status,

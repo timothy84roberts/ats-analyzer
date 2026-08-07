@@ -254,6 +254,16 @@
                     <form method="post" action="{{ route('applications.calls.store', $application) }}" class="admin-form-stack admin-book-call-form" style="margin-top: 18px; width: 100%;">
                         @csrf
                         <div class="admin-field">
+                            <label class="admin-label" for="call-user-id">{{ __('User') }}</label>
+                            <select id="call-user-id" name="user_id" class="admin-select" required>
+                                <option value="">{{ __('Select user') }}</option>
+                                @foreach ($managedUsers as $managedUser)
+                                    <option value="{{ $managedUser->id }}" @selected((string) old('user_id', $application->user_id) === (string) $managedUser->id)>{{ $managedUser->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                        </div>
+                        <div class="admin-field">
                             <label class="admin-label" for="call-title">{{ __('Title') }}</label>
                             <input id="call-title" type="text" name="title" class="admin-input" value="{{ old('title') }}" placeholder="{{ __('e.g. Phone screen with recruiter') }}" required autofocus>
                             <x-input-error :messages="$errors->get('title')" class="mt-2" />
