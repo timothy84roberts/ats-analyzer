@@ -162,7 +162,6 @@
                 <thead>
                     <tr>
                         <th>{{ __('Title') }}</th>
-                        <th>{{ __('User') }}</th>
                         <th>{{ __('Company') }}</th>
                         <th style="width: 160px;">{{ __('Country') }}</th>
                         <th>{{ __('Platform') }}</th>
@@ -175,16 +174,18 @@
                 <tbody>
                     @forelse ($applications as $app)
                         <tr>
-                            <td><a href="{{ route('applications.show', $app) }}">{{ $app->title }}</a></td>
                             <td>
-                                @if ($app->user)
-                                    @php($hue = ($app->user->id * 47) % 360)
-                                    <span class="admin-pill" style="display:inline-flex;align-items:center;background:hsla({{ $hue }}, 55%, 42%, 0.14);color:hsl({{ $hue }}, 55%, 32%);">
-                                        {{ $app->user->name }}
-                                    </span>
-                                @else
-                                    —
-                                @endif
+                                <div class="app-title-cell">
+                                    @if ($app->user)
+                                        @php($hue = ($app->user->id * 47) % 360)
+                                        <span
+                                            class="app-user-badge"
+                                            style="--user-hue: {{ $hue }};"
+                                            title="{{ $app->user->name }}"
+                                        >{{ $app->user->name }}</span>
+                                    @endif
+                                    <a href="{{ route('applications.show', $app) }}">{{ $app->title }}</a>
+                                </div>
                             </td>
                             <td>{{ $app->company_name ?? '—' }}</td>
                             <td>
@@ -366,7 +367,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" style="text-align: center; padding: 48px; color: var(--admin-text-muted);">{{ __('No applications yet.') }}</td></tr>
+                        <tr><td colspan="8" style="text-align: center; padding: 48px; color: var(--admin-text-muted);">{{ __('No applications yet.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -375,4 +376,36 @@
             {{ $applications->links() }}
         </div>
     </div>
+
+    @pushOnce('styles')
+        <style>
+            .app-title-cell {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                min-width: 0;
+            }
+            .app-user-badge {
+                display: inline-block;
+                max-width: 100%;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 0.65rem;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                line-height: 1.35;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                background: hsla(var(--user-hue), 55%, 42%, 0.16);
+                color: hsl(var(--user-hue), 55%, 30%);
+            }
+            html[data-theme="dark"] .app-user-badge {
+                background: hsla(var(--user-hue), 45%, 48%, 0.22);
+                color: hsl(var(--user-hue), 70%, 78%);
+            }
+        </style>
+    @endPushOnce
 </x-app-layout>

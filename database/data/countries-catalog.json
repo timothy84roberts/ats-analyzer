@@ -1,5 +1,10 @@
 [
     {
+        "code": "XK",
+        "name": "Kosovo",
+        "numeric_code": 0
+    },
+    {
         "code": "AF",
         "name": "Afghanistan",
         "numeric_code": 4
@@ -101,7 +106,7 @@
     },
     {
         "code": "BO",
-        "name": "Bolivia, Plurinational State of",
+        "name": "Bolivia",
         "numeric_code": 68
     },
     {
@@ -141,12 +146,12 @@
     },
     {
         "code": "VG",
-        "name": "Virgin Islands (British)",
+        "name": "British Virgin Islands",
         "numeric_code": 92
     },
     {
         "code": "BN",
-        "name": "Brunei Darussalam",
+        "name": "Brunei",
         "numeric_code": 96
     },
     {
@@ -186,7 +191,7 @@
     },
     {
         "code": "CV",
-        "name": "Cabo Verde",
+        "name": "Cape Verde",
         "numeric_code": 132
     },
     {
@@ -221,7 +226,7 @@
     },
     {
         "code": "TW",
-        "name": "Taiwan, Province of China",
+        "name": "Taiwan",
         "numeric_code": 158
     },
     {
@@ -251,12 +256,12 @@
     },
     {
         "code": "CG",
-        "name": "Congo",
+        "name": "Republic of the Congo",
         "numeric_code": 178
     },
     {
         "code": "CD",
-        "name": "Congo, Democratic Republic of the",
+        "name": "DR Congo",
         "numeric_code": 180
     },
     {
@@ -346,12 +351,12 @@
     },
     {
         "code": "FK",
-        "name": "Falkland Islands (Malvinas)",
+        "name": "Falkland Islands",
         "numeric_code": 238
     },
     {
         "code": "GS",
-        "name": "South Georgia and the South Sandwich Islands",
+        "name": "South Georgia",
         "numeric_code": 239
     },
     {
@@ -386,7 +391,7 @@
     },
     {
         "code": "TF",
-        "name": "French Southern Territories",
+        "name": "French Southern and Antarctic Lands",
         "numeric_code": 260
     },
     {
@@ -411,7 +416,7 @@
     },
     {
         "code": "PS",
-        "name": "Palestine, State of",
+        "name": "Palestine",
         "numeric_code": 275
     },
     {
@@ -486,7 +491,7 @@
     },
     {
         "code": "VA",
-        "name": "Holy See",
+        "name": "Vatican City",
         "numeric_code": 336
     },
     {
@@ -521,7 +526,7 @@
     },
     {
         "code": "IR",
-        "name": "Iran, Islamic Republic of",
+        "name": "Iran",
         "numeric_code": 364
     },
     {
@@ -546,7 +551,7 @@
     },
     {
         "code": "CI",
-        "name": "Côte d'Ivoire",
+        "name": "Ivory Coast",
         "numeric_code": 384
     },
     {
@@ -576,12 +581,12 @@
     },
     {
         "code": "KP",
-        "name": "Korea, Democratic People's Republic of",
+        "name": "North Korea",
         "numeric_code": 408
     },
     {
         "code": "KR",
-        "name": "Korea, Republic of",
+        "name": "South Korea",
         "numeric_code": 410
     },
     {
@@ -596,7 +601,7 @@
     },
     {
         "code": "LA",
-        "name": "Lao People's Democratic Republic",
+        "name": "Laos",
         "numeric_code": 418
     },
     {
@@ -641,7 +646,7 @@
     },
     {
         "code": "MO",
-        "name": "Macao",
+        "name": "Macau",
         "numeric_code": 446
     },
     {
@@ -706,7 +711,7 @@
     },
     {
         "code": "MD",
-        "name": "Moldova, Republic of",
+        "name": "Moldova",
         "numeric_code": 498
     },
     {
@@ -751,7 +756,7 @@
     },
     {
         "code": "NL",
-        "name": "Netherlands, Kingdom of the",
+        "name": "Netherlands",
         "numeric_code": 528
     },
     {
@@ -766,12 +771,12 @@
     },
     {
         "code": "SX",
-        "name": "Sint Maarten (Dutch part)",
+        "name": "Sint Maarten",
         "numeric_code": 534
     },
     {
         "code": "BQ",
-        "name": "Bonaire, Sint Eustatius and Saba",
+        "name": "Caribbean Netherlands",
         "numeric_code": 535
     },
     {
@@ -831,7 +836,7 @@
     },
     {
         "code": "FM",
-        "name": "Micronesia, Federated States of",
+        "name": "Micronesia",
         "numeric_code": 583
     },
     {
@@ -876,7 +881,7 @@
     },
     {
         "code": "PN",
-        "name": "Pitcairn",
+        "name": "Pitcairn Islands",
         "numeric_code": 612
     },
     {
@@ -921,7 +926,7 @@
     },
     {
         "code": "RU",
-        "name": "Russian Federation",
+        "name": "Russia",
         "numeric_code": 643
     },
     {
@@ -956,7 +961,7 @@
     },
     {
         "code": "MF",
-        "name": "Saint Martin (French part)",
+        "name": "Saint Martin",
         "numeric_code": 663
     },
     {
@@ -976,7 +981,7 @@
     },
     {
         "code": "ST",
-        "name": "Sao Tome and Principe",
+        "name": "São Tomé and Príncipe",
         "numeric_code": 678
     },
     {
@@ -1016,7 +1021,7 @@
     },
     {
         "code": "VN",
-        "name": "Viet Nam",
+        "name": "Vietnam",
         "numeric_code": 704
     },
     {
@@ -1086,7 +1091,7 @@
     },
     {
         "code": "SY",
-        "name": "Syrian Arab Republic",
+        "name": "Syria",
         "numeric_code": 760
     },
     {
@@ -1131,7 +1136,7 @@
     },
     {
         "code": "TR",
-        "name": "Türkiye",
+        "name": "Turkey",
         "numeric_code": 792
     },
     {
@@ -1171,7 +1176,7 @@
     },
     {
         "code": "GB",
-        "name": "United Kingdom of Great Britain and Northern Ireland",
+        "name": "United Kingdom",
         "numeric_code": 826
     },
     {
@@ -1191,17 +1196,17 @@
     },
     {
         "code": "TZ",
-        "name": "Tanzania, United Republic of",
+        "name": "Tanzania",
         "numeric_code": 834
     },
     {
         "code": "US",
-        "name": "United States of America",
+        "name": "United States",
         "numeric_code": 840
     },
     {
         "code": "VI",
-        "name": "Virgin Islands (U.S.)",
+        "name": "United States Virgin Islands",
         "numeric_code": 850
     },
     {
@@ -1221,7 +1226,7 @@
     },
     {
         "code": "VE",
-        "name": "Venezuela, Bolivarian Republic of",
+        "name": "Venezuela",
         "numeric_code": 862
     },
     {

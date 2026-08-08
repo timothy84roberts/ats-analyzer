@@ -9,7 +9,7 @@ use RuntimeException;
 
 class CountryCatalogService
 {
-    private const CACHE_KEY = 'countries:catalog:v1';
+    private const CACHE_KEY = 'countries:catalog:v2';
 
     /**
      * Sorted by UN M.49 numeric code, then name.
@@ -71,15 +71,86 @@ class CountryCatalogService
         $apiKey = trim((string) config('countries.catalog_api_key', ''));
         if ($apiKey !== '') {
             try {
-                return $this->fetchFromApi($apiKey);
+                return $this->fetchFromV5Api($apiKey);
             } catch (RuntimeException $e) {
-                Log::warning('Country catalog API failed, using bundled list.', [
+                Log::warning('Country catalog v5 API failed, trying public common-name source.', [
                     'message' => $e->getMessage(),
                 ]);
             }
         }
 
+        try {
+            return $this->fetchFromPublicCommonNames();
+        } catch (RuntimeException $e) {
+            Log::warning('Public country catalog failed, using bundled list.', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+
         return $this->loadBundled();
+    }
+
+    /**
+     * world-countries / mledoze dataset — uses shorter common names.
+     *
+     * @return list<array{code: string, name: string, numeric_code: int}>
+     */
+    private function fetchFromPublicCommonNames(): array
+    {
+        $url = (string) config('countries.catalog_url');
+        $timeout = max(5, (int) config('countries.http_timeout', 25));
+
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withHeaders(['User-Agent' => 'ats-analyzer'])
+            ->get($url);
+
+        if (! $response->successful()) {
+            throw new RuntimeException('Country catalog HTTP '.$response->status());
+        }
+
+        /** @var mixed $decoded */
+        $decoded = $response->json();
+        if (! is_array($decoded)) {
+            throw new RuntimeException('Country catalog invalid JSON');
+        }
+
+        $rows = [];
+        foreach ($decoded as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $code = isset($item['cca2']) && is_string($item['cca2'])
+                ? strtoupper($item['cca2'])
+                : '';
+            if (strlen($code) !== 2 || ! ctype_alpha($code)) {
+                continue;
+            }
+
+            $name = null;
+            if (isset($item['name']) && is_array($item['name'])) {
+                $name = $item['name']['common'] ?? $item['name']['official'] ?? null;
+            } elseif (isset($item['name']) && is_string($item['name'])) {
+                $name = $item['name'];
+            }
+
+            if (! is_string($name) || $name === '') {
+                continue;
+            }
+
+            $rows[] = [
+                'code' => $code,
+                'name' => $name,
+                'numeric_code' => $this->parseCcn3($item['ccn3'] ?? null),
+            ];
+        }
+
+        if ($rows === []) {
+            throw new RuntimeException('Country catalog returned no countries.');
+        }
+
+        return $this->sortRows($rows);
     }
 
     /**
@@ -120,15 +191,17 @@ class CountryCatalogService
             throw new RuntimeException('Bundled country catalog is empty.');
         }
 
-        return $rows;
+        return $this->sortRows($rows);
     }
 
     /**
+     * Optional REST Countries v5 (requires API key).
+     *
      * @return list<array{code: string, name: string, numeric_code: int}>
      */
-    private function fetchFromApi(string $apiKey): array
+    private function fetchFromV5Api(string $apiKey): array
     {
-        $baseUrl = rtrim((string) config('countries.catalog_url'), '/');
+        $baseUrl = rtrim((string) config('countries.catalog_v5_url'), '/');
         $timeout = max(5, (int) config('countries.http_timeout', 25));
         $pageSize = min(100, max(1, (int) config('countries.catalog_page_size', 100)));
 
@@ -183,8 +256,11 @@ class CountryCatalogService
                     continue;
                 }
 
-                $numericCode = $this->parseCcn3($item['codes']['ccn3'] ?? null);
-                $rows[] = ['code' => $code, 'name' => $name, 'numeric_code' => $numericCode];
+                $rows[] = [
+                    'code' => $code,
+                    'name' => $name,
+                    'numeric_code' => $this->parseCcn3($item['codes']['ccn3'] ?? null),
+                ];
             }
 
             $more = (bool) ($decoded['data']['meta']['more'] ?? false);
@@ -195,6 +271,15 @@ class CountryCatalogService
             throw new RuntimeException('Country catalog returned no countries.');
         }
 
+        return $this->sortRows($rows);
+    }
+
+    /**
+     * @param  list<array{code: string, name: string, numeric_code: int}>  $rows
+     * @return list<array{code: string, name: string, numeric_code: int}>
+     */
+    private function sortRows(array $rows): array
+    {
         usort($rows, function (array $a, array $b): int {
             $cmp = $a['numeric_code'] <=> $b['numeric_code'];
             if ($cmp !== 0) {
@@ -222,6 +307,7 @@ class CountryCatalogService
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);
+        Cache::forget('countries:catalog:v1');
         Cache::forget('countries:catalog:restcountries:v5');
         Cache::forget('countries:catalog:restcountries:v2');
     }

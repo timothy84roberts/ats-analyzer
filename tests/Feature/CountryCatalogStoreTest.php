@@ -17,37 +17,30 @@ class CountryCatalogStoreTest extends TestCase
     {
         parent::setUp();
         Cache::flush();
-        config(['countries.catalog_api_key' => 'test-key']);
+        config([
+            'countries.catalog_api_key' => '',
+            'countries.catalog_url' => 'https://cdn.jsdelivr.net/npm/world-countries@5.0.0/countries.json',
+        ]);
         app(CountryCatalogService::class)->clearCache();
     }
 
     /**
-     * @param  list<array<string, mixed>>  $objects
+     * @param  list<array<string, mixed>>  $countries
      */
-    private function fakeCatalogResponse(array $objects): void
+    private function fakePublicCatalog(array $countries): void
     {
         Http::fake([
-            'https://api.restcountries.com/countries/v5*' => Http::response([
-                'data' => [
-                    'objects' => $objects,
-                    'meta' => [
-                        'total' => count($objects),
-                        'count' => count($objects),
-                        'limit' => 100,
-                        'offset' => 0,
-                        'more' => false,
-                    ],
-                ],
-            ], 200),
+            'cdn.jsdelivr.net/*' => Http::response($countries, 200),
         ]);
     }
 
-    public function test_store_creates_country_using_catalog_api(): void
+    public function test_store_creates_country_using_public_catalog(): void
     {
-        $this->fakeCatalogResponse([
+        $this->fakePublicCatalog([
             [
-                'codes' => ['alpha_2' => 'TX', 'ccn3' => '999'],
-                'names' => ['common' => 'Testland'],
+                'cca2' => 'TX',
+                'ccn3' => '999',
+                'name' => ['common' => 'Testland', 'official' => 'Republic of Testland'],
             ],
         ]);
 
@@ -67,10 +60,11 @@ class CountryCatalogStoreTest extends TestCase
 
     public function test_store_rejects_code_not_in_catalog(): void
     {
-        $this->fakeCatalogResponse([
+        $this->fakePublicCatalog([
             [
-                'codes' => ['alpha_2' => 'AA', 'ccn3' => '001'],
-                'names' => ['common' => 'Alpha'],
+                'cca2' => 'AA',
+                'ccn3' => '001',
+                'name' => ['common' => 'Alpha'],
             ],
         ]);
 
@@ -82,22 +76,29 @@ class CountryCatalogStoreTest extends TestCase
             ->assertSessionHasErrors('code');
     }
 
-    public function test_create_works_without_api_key_using_bundled_catalog(): void
+    public function test_create_works_with_bundled_catalog_when_remote_fails(): void
     {
-        config(['countries.catalog_api_key' => '']);
-        app(CountryCatalogService::class)->clearCache();
+        Http::fake([
+            'cdn.jsdelivr.net/*' => Http::response('unavailable', 503),
+        ]);
 
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get(route('countries.create'))
             ->assertOk()
-            ->assertViewHas('options');
+            ->assertViewHas('options', function ($options) {
+                $us = collect($options)->firstWhere('code', 'US');
+
+                return $us !== null && $us['name'] === 'United States';
+            });
     }
 
     public function test_create_shows_catalog_error_when_bundled_catalog_missing(): void
     {
-        config(['countries.catalog_api_key' => '']);
+        Http::fake([
+            'cdn.jsdelivr.net/*' => Http::response('unavailable', 503),
+        ]);
         app(CountryCatalogService::class)->clearCache();
 
         $path = database_path('data/countries-catalog.json');
@@ -118,5 +119,17 @@ class CountryCatalogStoreTest extends TestCase
                 rename($backup, $path);
             }
         }
+    }
+
+    public function test_catalog_prefers_common_short_names(): void
+    {
+        Http::fake([
+            'cdn.jsdelivr.net/*' => Http::response('unavailable', 503),
+        ]);
+        app(CountryCatalogService::class)->clearCache();
+
+        $name = app(CountryCatalogService::class)->nameForCode('US');
+
+        $this->assertSame('United States', $name);
     }
 }
