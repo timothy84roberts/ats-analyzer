@@ -49,4 +49,21 @@ return [
         'retry_base_ms' => (int) env('APYHUB_RETRY_BASE_MS', 500),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Job application share (Google Apps Script → Drive)
+    |--------------------------------------------------------------------------
+    |
+    | Free automatic share: Laravel POSTs title, description, and resume to a
+    | Google Apps Script web app, which writes into your shared Drive folder.
+    |
+    */
+    'job_application_share' => [
+        'enabled' => (bool) env('JOB_APPLICATION_SHARE_ENABLED', false),
+        'webhook_url' => env('JOB_APPLICATION_SHARE_WEBHOOK_URL', ''),
+        'token' => env('JOB_APPLICATION_SHARE_TOKEN', ''),
+        'timeout' => (int) env('JOB_APPLICATION_SHARE_TIMEOUT', 60),
+        'folder_id' => env('JOB_APPLICATION_SHARE_FOLDER_ID', '1jnLo3dJbuEPVkLId2ys2UBHXkcYG9Bhy'),
+    ],
+
 ];

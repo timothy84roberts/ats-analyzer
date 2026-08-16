@@ -9,6 +9,7 @@ use App\Models\JobApplication;
 use App\Models\PipelineStage;
 use App\Models\Platform;
 use App\Models\User;
+use App\Services\JobApplicationShareService;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ class JobApplicationController extends Controller
         return view('job-applications.create', $this->formOptions());
     }
 
-    public function store(StoreJobApplicationRequest $request): RedirectResponse
+    public function store(StoreJobApplicationRequest $request, JobApplicationShareService $shareService): RedirectResponse
     {
         $defaultStageId = PipelineStage::defaultIdForNewApplication();
         if ($defaultStageId === null) {
@@ -78,7 +79,8 @@ class JobApplicationController extends Controller
                 'local'
             );
         }
-        JobApplication::create($data);
+        $application = JobApplication::create($data);
+        $shareService->share($application);
 
         if ($request->boolean('keep_creating')) {
             return redirect()->route('applications.create')
