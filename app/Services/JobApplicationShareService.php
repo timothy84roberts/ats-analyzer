@@ -45,6 +45,7 @@ class JobApplicationShareService
             'folder_id' => $folderId,
             'application_id' => $application->id,
             'title' => $application->title,
+            'folder_name' => $this->shareFolderName($application),
             'description_html' => RichTextSanitizer::sanitize($application->description),
             'description_text' => $this->plainDescription($application->description),
             'company_name' => $application->company_name,
@@ -158,12 +159,12 @@ class JobApplicationShareService
                 ? 'Folder ID matches Job share.'
                 : 'Warning: script folder_id is "'.$folderId.'"; expected Job share id '.$expected.'.';
 
-            if ($scriptVersion === 'naming-v2') {
-                $hints[] = 'script_version=naming-v2 (folder = "{title} - {company}", description.txt only).';
+            if ($scriptVersion === 'naming-v3') {
+                $hints[] = 'script_version=naming-v3 (folder = "{company} - {title}", description.txt only).';
             } elseif ($scriptVersion === '') {
                 $hints[] = 'WARNING: script_version missing — you are still on the OLD Apps Script. Paste ShareJobApplication.gs and Deploy → Manage deployments → New version.';
             } else {
-                $hints[] = 'script_version='.$scriptVersion.' (expected naming-v2). Redeploy the latest ShareJobApplication.gs.';
+                $hints[] = 'script_version='.$scriptVersion.' (expected naming-v3). Redeploy the latest ShareJobApplication.gs.';
             }
 
             return [
@@ -252,6 +253,22 @@ class JobApplicationShareService
     private function plainDescription(?string $html): string
     {
         return RichTextSanitizer::toPlainText($html);
+    }
+
+    /**
+     * Drive subfolder: "{company name} - {job title}", e.g. "BRG - Software Engineer".
+     */
+    private function shareFolderName(JobApplication $application): string
+    {
+        $title = trim((string) $application->title) ?: 'Untitled';
+        $company = trim((string) $application->company_name);
+
+        $name = $company === '' ? $title : $company.' - '.$title;
+
+        $safe = trim((string) preg_replace('/[\\\\\/:*?"<>|]+/', '-', $name));
+        $safe = trim(preg_replace('/\s+/', ' ', $safe) ?? $safe);
+
+        return mb_substr($safe !== '' ? $safe : 'Untitled', 0, 120);
     }
 
     private function resumeFilename(JobApplication $application): string

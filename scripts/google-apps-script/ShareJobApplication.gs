@@ -2,7 +2,7 @@
  * Google Apps Script → Drive folder "Job share"
  *
  * OUTPUT RULES (must match exactly):
- *   Folder name:     {job title} - {company name}   e.g. "Software Engineer - BRG"
+ *   Folder name:     {company name} - {job title}   e.g. "BRG - Software Engineer"
  *   description.txt: job description text ONLY (no Title/Company/User/etc.)
  *   Resume PDF:      Shayne Guiliano_{company name}.pdf
  *
@@ -11,7 +11,7 @@
  *
  * CRITICAL — editing this file in script.google.com does NOTHING until you redeploy:
  *   Deploy → Manage deployments → pencil (Edit) → Version: New version → Deploy
- *   Then open the /exec URL in a browser. You MUST see "script_version":"naming-v2"
+ *   Then open the /exec URL in a browser. You MUST see "script_version":"naming-v3"
  *   If you still see old folders (#222 date — title), you did not redeploy.
  *
  * Full setup:
@@ -27,7 +27,7 @@ var JOB_SHARE_FOLDER_ID = '1jnLo3dJbuEPVkLId2ys2UBHXkcYG9Bhy';
 var JOB_SHARE_FOLDER_NAME = 'Job share';
 
 /** Bump this when naming rules change — probe/browser must show this value. */
-var SCRIPT_VERSION = 'naming-v2';
+var SCRIPT_VERSION = 'naming-v3';
 
 function doGet() {
   var folderMeta = safeFolderMeta_();
@@ -39,7 +39,7 @@ function doGet() {
     folder_name: folderMeta.name || JOB_SHARE_FOLDER_NAME,
     folder_url: folderMeta.url || ('https://drive.google.com/drive/folders/' + JOB_SHARE_FOLDER_ID),
     naming: {
-      folder: '{job title} - {company name}',
+      folder: '{company name} - {job title}',
       description_file: 'description.txt (description only)',
       resume: 'Shayne Guiliano_{company name}.pdf',
     },
@@ -64,9 +64,9 @@ function doPost(e) {
     var title = String(data.title || 'Untitled').trim();
     var company = String(data.company_name || '').trim();
 
-    // e.g. "Software Engineer - BRG"
+    // e.g. "BRG - Software Engineer"
     var folderName = sanitizeDriveName_(
-      company ? (title + ' - ' + company) : title
+      String(data.folder_name || '').trim() || (company ? (company + ' - ' + title) : title)
     );
     var appFolder = root.createFolder(folderName);
 

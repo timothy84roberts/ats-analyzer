@@ -66,6 +66,8 @@ class JobApplicationShareTest extends TestCase
                 && ($data['folder_id'] ?? null) === '1jnLo3dJbuEPVkLId2ys2UBHXkcYG9Bhy'
                 && ($data['application_id'] ?? null) === $application->id
                 && ($data['title'] ?? null) === 'Staff iOS Engineer'
+                && ($data['folder_name'] ?? null) === 'Acme - Staff iOS Engineer'
+                && ($data['company_name'] ?? null) === 'Acme'
                 && ($data['description_text'] ?? null) === "About the job\n\nWe do Consulting Differently\nBuild great apps."
                 && isset($data['resume']['content_base64'])
                 && ($data['resume']['mime_type'] ?? null) === 'application/pdf'
